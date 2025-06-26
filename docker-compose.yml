@@ -1,0 +1,219 @@
+version: '3.8'
+
+services:
+  # Enhanced AGR MCP Server - JavaScript Implementation
+  agr-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: agr-mcp-server-js
+    restart: unless-stopped
+    
+    # Environment configuration
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - API_TIMEOUT=30000
+      - CACHE_TTL=300
+      - CACHE_MAX_KEYS=1000
+      - PORT=3000
+    
+    # Port mapping
+    ports:
+      - "3000:3000"
+    
+    # Volume mounts for logs and cache persistence
+    volumes:
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+      - /tmp:/app/tmp
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "scripts/health-check.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Read-only root filesystem for security
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/logs
+      - /app/cache
+    
+    # Network configuration
+    networks:
+      - agr-network
+
+  # Development server with hot reload
+  agr-mcp-server-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: agr-mcp-server-js-dev
+    restart: unless-stopped
+    profiles:
+      - development
+    
+    # Environment configuration for development
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - API_TIMEOUT=30000
+      - CACHE_TTL=60
+      - PORT=3001
+    
+    # Port mapping
+    ports:
+      - "3001:3001"
+      - "9229:9229" # Debug port
+    
+    # Volume mounts for development
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+    
+    # Override command for development
+    command: ["node", "--inspect=0.0.0.0:9229", "src/agr-server-enhanced.js"]
+    
+    # Networks
+    networks:
+      - agr-network
+
+  # Redis cache for enhanced performance (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: agr-redis
+    restart: unless-stopped
+    profiles:
+      - cache
+    
+    # Redis configuration
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    
+    # Volume for persistence
+    volumes:
+      - redis-data:/data
+    
+    # Port mapping
+    ports:
+      - "6379:6379"
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Networks
+    networks:
+      - agr-network
+
+  # Monitoring with Prometheus (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: agr-prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    
+    # Port mapping
+    ports:
+      - "9090:9090"
+    
+    # Configuration
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    
+    # Command
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    
+    # Networks
+    networks:
+      - agr-network
+
+  # Grafana for visualization (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: agr-grafana
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    
+    # Port mapping
+    ports:
+      - "3001:3000"
+    
+    # Environment
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    
+    # Volumes
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    
+    # Networks
+    networks:
+      - agr-network
+
+# Networks
+networks:
+  agr-network:
+    driver: bridge
+    name: agr-network
+
+# Volumes
+volumes:
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+# Extension fields for reusability
+x-common-variables: &common-variables
+  NODE_ENV: production
+  LOG_LEVEL: info
+
+x-resource-limits: &resource-limits
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+        cpus: '0.5'

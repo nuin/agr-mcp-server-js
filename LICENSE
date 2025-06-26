@@ -1,0 +1,71 @@
+MIT License
+
+Copyright (c) 2025 Alliance of Genome Resources - Enhanced MCP Server Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Third-Party Licenses
+
+This project includes software developed by third parties:
+
+### Node.js Dependencies
+
+- **axios** - MIT License - Promise based HTTP client for the browser and node.js
+- **pino** - MIT License - Super fast logger for Node.js
+- **node-cache** - MIT License - Simple and fast NodeJS internal caching
+- **@modelcontextprotocol/sdk** - MIT License - Model Context Protocol SDK
+
+### Development Dependencies
+
+- **vitest** - MIT License - A blazing fast unit test framework powered by Vite
+- **eslint** - MIT License - JavaScript and TypeScript linter
+- **prettier** - MIT License - Code formatter
+
+For a complete list of dependencies and their licenses, see package.json and run:
+```bash
+npm list --depth=0
+npm ls --prod --parseable | xargs npm view --silent --parseable license
+```
+
+## Attribution
+
+This project builds upon the Alliance of Genome Resources (AGR) APIs and services:
+- Alliance of Genome Resources: https://www.alliancegenome.org/
+- AGR API Documentation: https://www.alliancegenome.org/swagger-ui/
+
+## Contributing
+
+By contributing to this project, you agree that your contributions will be licensed 
+under the MIT License. See CONTRIBUTING.md for more details.
+
+## Disclaimer
+
+This software is provided for research and educational purposes. While it interfaces 
+with the Alliance of Genome Resources APIs, it is not officially endorsed or 
+maintained by the Alliance of Genome Resources consortium.
+
+Users should always verify genomic and biological information through official 
+sources and consult with qualified professionals for clinical or research decisions.
+
+## Contact
+
+For questions about this license or the software, please open an issue on GitHub:
+https://github.com/genomics/agr-mcp-server-js/issues
