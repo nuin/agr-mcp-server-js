@@ -5,7 +5,8 @@
   "type": "module",
   "main": "src/agr-server-enhanced.js",
   "bin": {
-    "agr-mcp-server": "./src/agr-server-enhanced.js"
+    "agr-mcp-server": "./src/agr-server-enhanced.js",
+    "alliance": "./bin/alliance.js"
   },
   "scripts": {
     "start": "node src/agr-server-enhanced.js",
@@ -24,7 +25,9 @@
     "precommit": "npm run lint:fix && npm run format && npm run test",
     "health-check": "node scripts/health-check.js",
     "cache:clear": "node scripts/clear-cache.js",
-    "setup": "npm install && npm run validate"
+    "setup": "npm install && npm run validate",
+    "query": "node scripts/easy-query.js",
+    "query:help": "node scripts/easy-query.js"
   },
   "keywords": [
     "genomics",

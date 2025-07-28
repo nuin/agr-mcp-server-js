@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(git init:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(node:*)",
+      "Bash(git push:*)",
+      "Bash(timeout:*)",
+      "Bash(npm run:*)",
+      "Bash(alliance \"BRCA1 genes in human\")"
     ],
     "deny": []
   }

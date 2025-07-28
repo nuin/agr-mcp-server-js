@@ -28,6 +28,14 @@ npm start
 - **Benchmarking**: `npm run benchmark`
 - **Documentation**: `npm run docs` (generates JSDoc documentation)
 
+## Easy Query Commands (No JSON-RPC Required)
+- **Query Help**: `npm run query` (shows available commands)
+- **Search Genes**: `npm run query genes BRCA1`
+- **Search Diseases**: `npm run query diseases "breast cancer"`
+- **Gene Information**: `npm run query info HGNC:1100`
+- **Cache Statistics**: `npm run query cache`
+- **BLAST Search**: `npm run query blast ATCGATCGATCG`
+
 ## Architecture Overview
 This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in JavaScript/Node.js, designed as a high-performance alternative to the Python version. The server provides genomics data access through the Model Context Protocol (MCP).
 
