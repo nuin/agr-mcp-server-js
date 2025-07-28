@@ -2,8 +2,8 @@
   "mcpServers": {
     "agr-genomics-enhanced-js": {
       "command": "node",
-      "args": ["/Users/nuin/Projects/alliance/agr-mcp-server-js/src/agr-server-enhanced.js"],
-      "cwd": "/Users/nuin/Projects/alliance/agr-mcp-server-js",
+      "args": ["<PROJECT_PATH>/src/agr-server-enhanced.js"],
+      "cwd": "<PROJECT_PATH>",
       "env": {
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
@@ -14,8 +14,8 @@
     },
     "agr-genomics-dev": {
       "command": "node",
-      "args": ["--inspect", "/Users/nuin/Projects/alliance/agr-mcp-server-js/src/agr-server-enhanced.js"],
-      "cwd": "/Users/nuin/Projects/alliance/agr-mcp-server-js",
+      "args": ["--inspect", "<PROJECT_PATH>/src/agr-server-enhanced.js"],
+      "cwd": "<PROJECT_PATH>",
       "env": {
         "NODE_ENV": "development",
         "LOG_LEVEL": "debug",

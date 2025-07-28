@@ -73,11 +73,12 @@ Enhanced AGR MCP Server (JavaScript)
 
 ### Installation
 ```bash
-# Clone or navigate to the project
-cd /Users/nuin/Projects/alliance/agr-mcp-server-js
+# Clone the repository
+git clone <repository-url>
+cd agr-mcp-server-js
 
-# Install dependencies
-npm install
+# Install dependencies and validate setup
+npm run setup
 
 # Start the server
 npm start
@@ -256,13 +257,15 @@ npm run health-check
 Update your Claude Desktop config file:
 
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+
 ```json
 {
   "mcpServers": {
     "agr-genomics-enhanced-js": {
       "command": "node",
-      "args": ["/Users/nuin/Projects/alliance/agr-mcp-server-js/src/agr-server-enhanced.js"],
-      "cwd": "/Users/nuin/Projects/alliance/agr-mcp-server-js",
+      "args": ["<PROJECT_PATH>/src/agr-server-enhanced.js"],
+      "cwd": "<PROJECT_PATH>",
       "env": {
         "LOG_LEVEL": "info"
       }
@@ -270,6 +273,8 @@ Update your Claude Desktop config file:
   }
 }
 ```
+
+Replace `<PROJECT_PATH>` with the absolute path to your cloned repository.
 
 ### Natural Language Queries
 With the enhanced JavaScript server, Claude can handle:
@@ -341,7 +346,6 @@ node scripts/monitor.js
 
 ## 📞 Support
 
-- **Project**: `/Users/nuin/Projects/alliance/agr-mcp-server-js/`
 - **Issues**: GitHub Issues
 - **Documentation**: JSDoc generated docs in `/docs`
 - **Health Check**: `npm run health-check`
