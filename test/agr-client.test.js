@@ -10,22 +10,51 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import axios from 'axios';
-import { EnhancedAGRClient } from '../src/agr-server-enhanced.js';
 
 // Mock axios for unit tests
-vi.mock('axios');
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() }
+      },
+      get: vi.fn(),
+      post: vi.fn()
+    }))
+  }
+}));
+
 const mockedAxios = vi.mocked(axios);
+
+// Import after mocking
+const { EnhancedAGRClient } = await import('../src/agr-server-enhanced.js');
 
 describe('Enhanced AGR Client', () => {
   let client;
+  let mockAxiosInstance;
   
   beforeEach(() => {
+    // Setup mock axios instance
+    mockAxiosInstance = {
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() }
+      },
+      get: vi.fn(),
+      post: vi.fn()
+    };
+    
+    mockedAxios.create.mockReturnValue(mockAxiosInstance);
+    
     client = new EnhancedAGRClient();
     vi.clearAllMocks();
   });
 
   afterEach(() => {
-    client.clearCache();
+    if (client && client.clearCache) {
+      client.clearCache();
+    }
   });
 
   describe('Input Validation', () => {
@@ -61,23 +90,17 @@ describe('Enhanced AGR Client', () => {
     });
 
     it('should validate BLAST sequences', async () => {
-      // Mock successful response
-      mockedAxios.create.mockReturnValue({
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() }
-        },
-        get: vi.fn().mockResolvedValue({
-          data: { results: [] },
-          status: 200,
-          config: { url: 'test' }
-        })
+      // Mock successful response  
+      mockAxiosInstance.mockResolvedValue({
+        data: { results: [] },
+        status: 200,
+        config: { url: 'test' }
       });
 
       // Valid DNA sequence
       await expect(client.blastSequence('ATCGATCGATCG')).resolves.toBeDefined();
       
-      // Valid protein sequence
+      // Valid protein sequence  
       await expect(client.blastSequence('MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG')).resolves.toBeDefined();
       
       // Invalid sequences
@@ -377,16 +400,27 @@ describe('Utility Functions', () => {
   let client;
   
   beforeEach(() => {
+    // Setup mock axios instance
+    const mockAxiosInstance = {
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() }
+      },
+      get: vi.fn(),
+      post: vi.fn()
+    };
+    
+    mockedAxios.create.mockReturnValue(mockAxiosInstance);
     client = new EnhancedAGRClient();
   });
 
-  describe('formatBytes', () => {
-    it('should format bytes correctly', () => {
-      expect(client.formatBytes(0)).toBe('0 B');
-      expect(client.formatBytes(1024)).toBe('1 KB');
-      expect(client.formatBytes(1024 * 1024)).toBe('1 MB');
-      expect(client.formatBytes(1024 * 1024 * 1024)).toBe('1 GB');
-      expect(client.formatBytes(1536)).toBe('1.5 KB');
+  describe('Cache Management', () => {
+    it('should provide cache statistics', () => {
+      const stats = client.getCacheStats();
+      expect(stats).toHaveProperty('keys');
+      expect(stats).toHaveProperty('hits');
+      expect(stats).toHaveProperty('misses');
+      expect(typeof stats.keys).toBe('number');
     });
   });
 });

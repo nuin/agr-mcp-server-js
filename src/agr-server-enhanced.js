@@ -2,10 +2,10 @@
 
 /**
  * Enhanced Alliance of Genome Resources (AGR) MCP Server - JavaScript Implementation
- * 
+ *
  * A high-performance, modern JavaScript implementation of the AGR MCP server
  * with enhanced features, better error handling, caching, and TypeScript-style documentation.
- * 
+ *
  * Improvements over Python version:
  * - Modern async/await with better error handling
  * - Intelligent caching system for API responses
@@ -15,7 +15,7 @@
  * - Better input validation
  * - Performance optimizations
  * - TypeScript-style JSDoc documentation
- * 
+ *
  * @author Genomics Team
  * @version 3.0.0
  */
@@ -24,7 +24,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
-  ListToolsRequestSchema,
+  ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import axios from 'axios';
 import NodeCache from 'node-cache';
@@ -41,12 +41,12 @@ const CONFIG = {
     textpresso: 'https://textpresso.alliancegenome.org',
     alliancemine: 'https://www.alliancegenome.org/alliancemine'
   },
-  
+
   // Performance settings
   timeout: 30000,
   maxRetries: 3,
   retryDelay: 1000,
-  
+
   // Caching configuration
   cache: {
     ttl: 300, // 5 minutes default TTL
@@ -54,13 +54,13 @@ const CONFIG = {
     maxKeys: 1000,
     useClones: false // Better performance for read-heavy operations
   },
-  
+
   // Rate limiting
   rateLimit: {
     windowMs: 60000, // 1 minute
     maxRequests: 100
   },
-  
+
   // Logging
   logging: {
     level: process.env.LOG_LEVEL || 'info',
@@ -93,14 +93,14 @@ class EnhancedAGRClient {
       timeout: CONFIG.timeout,
       headers: {
         'User-Agent': 'AGR-MCP-Server-JS/3.0.0',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       // Connection pooling
       maxRedirects: 3,
       validateStatus: (status) => status < 500 // Only retry on 5xx errors
     });
-    
+
     // Add request interceptor for logging
     this.client.interceptors.request.use(
       (config) => {
@@ -112,22 +112,22 @@ class EnhancedAGRClient {
         return Promise.reject(error);
       }
     );
-    
+
     // Add response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => {
-        logger.debug({ 
-          url: response.config.url, 
-          status: response.status, 
-          size: JSON.stringify(response.data).length 
+        logger.debug({
+          url: response.config.url,
+          status: response.status,
+          size: JSON.stringify(response.data).length
         }, 'API response received');
         return response;
       },
       (error) => {
-        logger.error({ 
+        logger.error({
           url: error.config?.url,
           status: error.response?.status,
-          message: error.message 
+          message: error.message
         }, 'API request failed');
         return Promise.reject(error);
       }
@@ -142,21 +142,21 @@ class EnhancedAGRClient {
   checkRateLimit(endpoint) {
     const now = Date.now();
     const windowStart = now - CONFIG.rateLimit.windowMs;
-    
+
     if (!rateLimitMap.has(endpoint)) {
       rateLimitMap.set(endpoint, []);
     }
-    
+
     const requests = rateLimitMap.get(endpoint);
-    
+
     // Remove old requests outside the window
     const validRequests = requests.filter(time => time > windowStart);
-    
+
     if (validRequests.length >= CONFIG.rateLimit.maxRequests) {
       logger.warn({ endpoint }, 'Rate limit exceeded');
       return false;
     }
-    
+
     validRequests.push(now);
     rateLimitMap.set(endpoint, validRequests);
     return true;
@@ -179,7 +179,7 @@ class EnhancedAGRClient {
 
     // Generate cache key if not provided
     const finalCacheKey = cacheKey || `${method}:${baseURL}${endpoint}:${JSON.stringify(params)}`;
-    
+
     // Check cache first
     if (method === 'GET') {
       const cachedResult = cache.get(finalCacheKey);
@@ -195,7 +195,7 @@ class EnhancedAGRClient {
     }
 
     const url = `${baseURL}/${endpoint.replace(/^\//, '')}`;
-    
+
     let lastError;
     for (let attempt = 1; attempt <= CONFIG.maxRetries; attempt++) {
       try {
@@ -207,7 +207,7 @@ class EnhancedAGRClient {
         });
 
         const data = response.data;
-        
+
         // Cache successful GET requests
         if (method === 'GET' && data) {
           cache.set(finalCacheKey, data, cacheTTL);
@@ -217,19 +217,19 @@ class EnhancedAGRClient {
         return data;
       } catch (error) {
         lastError = error;
-        
+
         if (attempt < CONFIG.maxRetries && error.response?.status >= 500) {
           const delay = CONFIG.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
-          logger.warn({ 
-            attempt, 
-            delay, 
-            error: error.message 
+          logger.warn({
+            attempt,
+            delay,
+            error: error.message
           }, `Retrying request in ${delay}ms`);
-          
+
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
-        
+
         break;
       }
     }
@@ -252,7 +252,7 @@ class EnhancedAGRClient {
    */
   validateGeneId(geneId) {
     if (!geneId || typeof geneId !== 'string') return false;
-    
+
     // Common gene ID patterns
     const patterns = [
       /^HGNC:\d+$/, // Human
@@ -263,7 +263,7 @@ class EnhancedAGRClient {
       /^WB\w+$/, // WormBase
       /^SGD:S\d+$/ // Yeast
     ];
-    
+
     return patterns.some(pattern => pattern.test(geneId));
   }
 
@@ -276,7 +276,7 @@ class EnhancedAGRClient {
     if (!query || typeof query !== 'string') {
       throw new Error('Query must be a non-empty string');
     }
-    
+
     // Remove potentially harmful characters but keep scientific notation
     return query
       .trim()
@@ -285,7 +285,7 @@ class EnhancedAGRClient {
   }
 
   // =================== CORE GENE FUNCTIONS ===================
-  
+
   /**
    * Search for genes with enhanced filtering and validation
    * @param {string} query - Search term
@@ -324,7 +324,7 @@ class EnhancedAGRClient {
     if (!this.validateGeneId(geneId)) {
       throw new Error(`Invalid gene ID format: ${geneId}`);
     }
-    
+
     return this.makeRequest(`/gene/${encodeURIComponent(geneId)}`);
   }
 
@@ -337,14 +337,14 @@ class EnhancedAGRClient {
     if (!this.validateGeneId(geneId)) {
       throw new Error(`Invalid gene ID format: ${geneId}`);
     }
-    
+
     return this.makeRequest(`/gene/${encodeURIComponent(geneId)}/summary`, {
       cacheTTL: 600 // Cache summaries longer (10 minutes)
     });
   }
 
   // =================== DISEASE FUNCTIONS ===================
-  
+
   /**
    * Get disease associations for a gene
    * @param {string} geneId - Gene identifier
@@ -354,7 +354,7 @@ class EnhancedAGRClient {
     if (!this.validateGeneId(geneId)) {
       throw new Error(`Invalid gene ID format: ${geneId}`);
     }
-    
+
     return this.makeRequest(`/gene/${encodeURIComponent(geneId)}/diseases`);
   }
 
@@ -378,7 +378,7 @@ class EnhancedAGRClient {
   }
 
   // =================== EXPRESSION FUNCTIONS ===================
-  
+
   /**
    * Get gene expression data
    * @param {string} geneId - Gene identifier
@@ -388,7 +388,7 @@ class EnhancedAGRClient {
     if (!this.validateGeneId(geneId)) {
       throw new Error(`Invalid gene ID format: ${geneId}`);
     }
-    
+
     return this.makeRequest(`/gene/${encodeURIComponent(geneId)}/expression`);
   }
 
@@ -401,12 +401,12 @@ class EnhancedAGRClient {
     if (!this.validateGeneId(geneId)) {
       throw new Error(`Invalid gene ID format: ${geneId}`);
     }
-    
+
     return this.makeRequest(`/gene/${encodeURIComponent(geneId)}/expression-ribbon-summary`);
   }
 
   // =================== ORTHOLOGY FUNCTIONS ===================
-  
+
   /**
    * Find orthologous genes across species
    * @param {string} geneId - Gene identifier
@@ -416,7 +416,7 @@ class EnhancedAGRClient {
     if (!this.validateGeneId(geneId)) {
       throw new Error(`Invalid gene ID format: ${geneId}`);
     }
-    
+
     return this.makeRequest(`/gene/${encodeURIComponent(geneId)}/orthologs`);
   }
 
@@ -430,7 +430,7 @@ class EnhancedAGRClient {
     if (!this.validateGeneId(geneId)) {
       throw new Error(`Invalid gene ID format: ${geneId}`);
     }
-    
+
     if (!species || typeof species !== 'string') {
       throw new Error('Species must be specified');
     }
@@ -440,7 +440,7 @@ class EnhancedAGRClient {
   }
 
   // =================== SEQUENCE FUNCTIONS ===================
-  
+
   /**
    * Perform BLAST sequence search with validation
    * @param {string} sequence - DNA/RNA/Protein sequence
@@ -461,7 +461,7 @@ class EnhancedAGRClient {
     // Validate sequence characters
     const dnaPattern = /^[ATCGN]+$/;
     const proteinPattern = /^[ACDEFGHIKLMNPQRSTVWY]+$/;
-    
+
     if (!dnaPattern.test(cleanSequence) && !proteinPattern.test(cleanSequence)) {
       throw new Error('Sequence contains invalid characters');
     }
@@ -487,7 +487,7 @@ class EnhancedAGRClient {
   }
 
   // =================== UTILITY FUNCTIONS ===================
-  
+
   /**
    * Get list of supported species
    * @returns {Promise<Object>} - Species list
@@ -535,12 +535,12 @@ const agrClient = new EnhancedAGRClient();
 const server = new Server(
   {
     name: 'agr-genomics-enhanced-js',
-    version: '3.0.0',
+    version: '3.0.0'
   },
   {
     capabilities: {
-      tools: {},
-    },
+      tools: {}
+    }
   }
 );
 
@@ -721,20 +721,20 @@ const TOOLS = [
 // Register tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
-    tools: TOOLS,
+    tools: TOOLS
   };
 });
 
 // Enhanced tool call handler with better error handling
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
-  
+
   try {
     logger.info({ tool: name, args }, 'Executing tool');
     const startTime = Date.now();
-    
+
     let result;
-    
+
     switch (name) {
       case 'search_genes':
         result = await agrClient.searchGenes(args.query, {
@@ -743,29 +743,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           species: args.species
         });
         break;
-        
+
       case 'get_gene_info':
         result = await agrClient.getGeneInfo(args.gene_id);
         break;
-        
+
       case 'get_gene_diseases':
         result = await agrClient.getGeneDiseases(args.gene_id);
         break;
-        
+
       case 'search_diseases':
         result = await agrClient.searchDiseases(args.query, {
           limit: args.limit
         });
         break;
-        
+
       case 'get_gene_expression':
         result = await agrClient.getGeneExpression(args.gene_id);
         break;
-        
+
       case 'find_orthologs':
         result = await agrClient.findOrthologs(args.gene_id);
         break;
-        
+
       case 'blast_sequence':
         result = await agrClient.blastSequence(args.sequence, {
           database: args.database,
@@ -773,11 +773,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           maxTargetSeqs: args.max_target_seqs
         });
         break;
-        
+
       case 'get_species_list':
         result = await agrClient.getSpeciesList();
         break;
-        
+
       case 'get_cache_stats':
         result = {
           cache: agrClient.getCacheStats(),
@@ -785,19 +785,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           uptime: process.uptime()
         };
         break;
-        
+
       case 'clear_cache':
         agrClient.clearCache(args.pattern);
         result = { message: 'Cache cleared successfully' };
         break;
-        
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
-    
+
     const duration = Date.now() - startTime;
     logger.info({ tool: name, duration }, 'Tool execution completed');
-    
+
     return {
       content: [
         {
@@ -806,10 +806,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       ]
     };
-    
+
   } catch (error) {
     logger.error({ tool: name, error: error.message }, 'Tool execution failed');
-    
+
     return {
       content: [
         {
@@ -841,7 +841,7 @@ async function main() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  
+
   logger.info('Enhanced AGR MCP Server started successfully');
 }
 
@@ -868,6 +868,9 @@ process.on('unhandledRejection', (reason, promise) => {
   logger.error({ reason, promise }, 'Unhandled promise rejection');
   process.exit(1);
 });
+
+// Export for testing
+export { EnhancedAGRClient };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {

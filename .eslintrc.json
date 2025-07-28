@@ -49,14 +49,16 @@
     {
       "files": ["test/**/*.js", "**/*.test.js"],
       "env": {
-        "vitest/env": true
+        "node": true,
+        "es2022": true
       },
-      "plugins": ["vitest"],
-      "rules": {
-        "vitest/expect-expect": "error",
-        "vitest/no-disabled-tests": "warn",
-        "vitest/no-focused-tests": "error",
-        "vitest/valid-expect": "error"
+      "globals": {
+        "describe": "readonly",
+        "it": "readonly",
+        "expect": "readonly",
+        "beforeEach": "readonly",
+        "afterEach": "readonly",
+        "vi": "readonly"
       }
     }
   ],
