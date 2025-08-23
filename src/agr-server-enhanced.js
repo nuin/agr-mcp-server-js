@@ -246,85 +246,43 @@ class EnhancedAGRClient {
   }
 
   /**
-   * Validate gene identifier format
-   * @param {string} geneId - Gene identifier to validate
-   * @returns {boolean} - Whether the identifier is valid
+   * Simple gene ID check
+   * @param {string} geneId - Gene identifier
+   * @returns {boolean} - Whether ID exists
    */
   validateGeneId(geneId) {
-    if (!geneId || typeof geneId !== 'string') return false;
-
-    // Common gene ID patterns
-    const patterns = [
-      /^HGNC:\d+$/, // Human
-      /^MGI:\d+$/, // Mouse
-      /^RGD:\d+$/, // Rat
-      /^ZFIN:ZDB-GENE-\d+-\d+$/, // Zebrafish
-      /^FB\w+$/, // FlyBase
-      /^WB\w+$/, // WormBase
-      /^SGD:S\d+$/ // Yeast
-    ];
-
-    return patterns.some(pattern => pattern.test(geneId));
-  }
-
-  /**
-   * Validate and sanitize search query
-   * @param {string} query - Search query
-   * @returns {string} - Sanitized query
-   */
-  sanitizeQuery(query) {
-    if (!query || typeof query !== 'string') {
-      throw new Error('Query must be a non-empty string');
-    }
-
-    // Remove potentially harmful characters but keep scientific notation
-    return query
-      .trim()
-      .replace(/[<>]/g, '') // Remove HTML-like brackets
-      .substring(0, 500); // Limit length
+    return Boolean(geneId);
   }
 
   // =================== CORE GENE FUNCTIONS ===================
 
   /**
-   * Search for genes with enhanced filtering and validation
+   * Search for genes - simplified
    * @param {string} query - Search term
-   * @param {Object} options - Search options
+   * @param {Object} options - Basic options
    * @returns {Promise<Object>} - Search results
    */
   async searchGenes(query, options = {}) {
-    const sanitizedQuery = this.sanitizeQuery(query);
-    const {
-      category = 'gene',
-      limit = 20,
-      offset = 0,
-      species = null
-    } = options;
-
     const params = {
-      q: sanitizedQuery,
-      category,
-      limit: Math.min(limit, 100), // Cap at 100
-      offset: Math.max(offset, 0) // Ensure non-negative
+      q: query,
+      category: 'gene',
+      limit: options.limit || 20,
+      offset: options.offset || 0
     };
 
-    if (species) {
-      params.species = species;
+    if (options.species) {
+      params.species = options.species;
     }
 
     return this.makeRequest('/search', { params });
   }
 
   /**
-   * Get comprehensive gene information
+   * Get gene information
    * @param {string} geneId - Gene identifier
    * @returns {Promise<Object>} - Gene information
    */
   async getGeneInfo(geneId) {
-    if (!this.validateGeneId(geneId)) {
-      throw new Error(`Invalid gene ID format: ${geneId}`);
-    }
-
     return this.makeRequest(`/gene/${encodeURIComponent(geneId)}`);
   }
 
@@ -359,22 +317,46 @@ class EnhancedAGRClient {
   }
 
   /**
-   * Search diseases with enhanced filtering
+   * Search diseases - simplified with response filtering
    * @param {string} query - Disease search term
-   * @param {Object} options - Search options
    * @returns {Promise<Object>} - Disease search results
    */
-  async searchDiseases(query, options = {}) {
-    const sanitizedQuery = this.sanitizeQuery(query);
-    const { limit = 20 } = options;
-
-    const params = {
-      q: sanitizedQuery,
-      category: 'disease',
-      limit: Math.min(limit, 100)
-    };
-
-    return this.makeRequest('/search', { params });
+  async searchDiseases(query) {
+    try {
+      const result = await this.makeRequest('/search', { 
+        params: { 
+          q: query, 
+          category: 'disease',
+          limit: 5
+        } 
+      });
+      
+      // Return only the top 5 diseases with minimal data
+      if (result && result.results) {
+        const topDiseases = result.results.slice(0, 5).map(d => ({
+          name: d.name,
+          id: d.id
+        }));
+        
+        return {
+          query: query,
+          total: result.total,
+          results: topDiseases
+        };
+      }
+      
+      return {
+        query: query,
+        total: 0,
+        results: []
+      };
+    } catch (error) {
+      return {
+        query: query,
+        error: 'Disease search failed',
+        message: error.message
+      };
+    }
   }
 
   // =================== EXPRESSION FUNCTIONS ===================
@@ -548,30 +530,22 @@ const server = new Server(
 const TOOLS = [
   {
     name: 'search_genes',
-    description: 'Search for genes by symbol, name, or identifier across model organisms with enhanced filtering',
+    description: 'Search for genes by symbol or name',
     inputSchema: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: 'Gene symbol, name, or identifier (max 500 chars)'
+          description: 'Gene symbol or name'
         },
         limit: {
           type: 'integer',
-          description: 'Maximum results (1-100, default: 20)',
-          minimum: 1,
-          maximum: 100,
+          description: 'Maximum results (default: 20)',
           default: 20
-        },
-        offset: {
-          type: 'integer',
-          description: 'Results to skip (default: 0)',
-          minimum: 0,
-          default: 0
         },
         species: {
           type: 'string',
-          description: 'Optional species filter'
+          description: 'Species filter (optional)'
         }
       },
       required: ['query']
@@ -607,20 +581,13 @@ const TOOLS = [
   },
   {
     name: 'search_diseases',
-    description: 'Search for diseases and conditions',
+    description: 'Search for diseases',
     inputSchema: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
           description: 'Disease name or term'
-        },
-        limit: {
-          type: 'integer',
-          description: 'Maximum results (1-100, default: 20)',
-          minimum: 1,
-          maximum: 100,
-          default: 20
         }
       },
       required: ['query']
@@ -753,9 +720,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
 
       case 'search_diseases':
-        result = await agrClient.searchDiseases(args.query, {
-          limit: args.limit
-        });
+        result = await agrClient.searchDiseases(args.query);
         break;
 
       case 'get_gene_expression':

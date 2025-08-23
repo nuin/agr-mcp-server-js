@@ -14,7 +14,7 @@ This JavaScript implementation offers significant improvements over the Python v
 - **Rate limiting** to prevent API overwhelm
 
 ### 🔧 **Advanced Features**
-- **Enhanced input validation** with comprehensive error handling
+- **Simplified search capabilities** with streamlined validation
 - **Structured logging** with configurable levels and pretty output
 - **TypeScript-style JSDoc documentation** for better IDE support
 - **Automatic sequence type detection** for BLAST operations
@@ -109,10 +109,10 @@ npm run format
 ## 📋 Available Tools (10 Core + Performance Tools)
 
 ### 🧬 **Core Genomics Tools**
-1. **`search_genes`** - Enhanced gene search with species filtering
-2. **`get_gene_info`** - Comprehensive gene information with validation
+1. **`search_genes`** - Simple gene search with species filtering
+2. **`get_gene_info`** - Comprehensive gene information
 3. **`get_gene_diseases`** - Disease associations and models
-4. **`search_diseases`** - Disease search with intelligent filtering
+4. **`search_diseases`** - Disease search with helpful guidance
 5. **`get_gene_expression`** - Expression data across tissues
 6. **`find_orthologs`** - Cross-species orthology analysis
 7. **`blast_sequence`** - BLAST search with auto-detection
@@ -254,7 +254,14 @@ npm run health-check
 ## 🌐 Claude Integration
 
 ### Claude Desktop Configuration
-Update your Claude Desktop config file:
+
+#### Option 1: Global Installation (Recommended)
+```bash
+# Install globally for easy setup
+npm install -g .
+```
+
+Then configure Claude Desktop:
 
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
@@ -262,7 +269,21 @@ Update your Claude Desktop config file:
 ```json
 {
   "mcpServers": {
-    "agr-genomics-enhanced-js": {
+    "agr-genomics": {
+      "command": "agr-mcp-server",
+      "env": {
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+```
+
+#### Option 2: Local Development Setup
+```json
+{
+  "mcpServers": {
+    "agr-genomics": {
       "command": "node",
       "args": ["<PROJECT_PATH>/src/agr-server-enhanced.js"],
       "cwd": "<PROJECT_PATH>",
