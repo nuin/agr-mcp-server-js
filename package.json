@@ -5,8 +5,7 @@
   "type": "module",
   "main": "src/agr-server-enhanced.js",
   "bin": {
-    "agr-mcp-server": "./src/agr-server-enhanced.js",
-    "alliance": "./bin/alliance.js"
+    "agr-mcp-server": "src/agr-server-simple.js"
   },
   "scripts": {
     "start": "node src/agr-server-enhanced.js",
@@ -31,7 +30,7 @@
   },
   "keywords": [
     "genomics",
-    "bioinformatics", 
+    "bioinformatics",
     "alliance-genome-resources",
     "mcp-server",
     "gene-search",

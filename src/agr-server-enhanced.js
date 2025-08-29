@@ -655,14 +655,18 @@ class EnhancedAGRClient {
    * @returns {Promise<Object>} - Aggregated results
    */
   async complexSearch(query, options = {}) {
-    const parsed = this.parseComplexQuery(query);
-    const results = {
-      query: query,
-      parsed: parsed,
-      entities: {},
-      aggregations: {},
-      relationships: []
-    };
+    try {
+      console.log('DEBUG: Starting complexSearch with query:', query);
+      const parsed = this.parseComplexQuery(query);
+      console.log('DEBUG: Parsed query:', parsed);
+      
+      const results = {
+        query: query,
+        parsed: parsed,
+        entities: {},
+        aggregations: {},
+        relationships: []
+      };
 
     // Search multiple entity types in parallel
     const searchPromises = [];
@@ -697,12 +701,20 @@ class EnhancedAGRClient {
     await Promise.all(searchPromises);
 
     // Compute aggregations across results
+    console.log('DEBUG: Computing aggregations on entities:', Object.keys(results.entities));
     results.aggregations = this.computeAggregations(results.entities);
+    console.log('DEBUG: Aggregations computed successfully');
 
     // Find relationships between entities
+    console.log('DEBUG: Finding relationships');
     results.relationships = await this.findRelationships(results.entities);
 
+    console.log('DEBUG: Returning complex search results');
     return results;
+    } catch (error) {
+      console.error('DEBUG: Error in complexSearch:', error.message, error.stack);
+      throw error;
+    }
   }
 
   /**
@@ -748,12 +760,15 @@ class EnhancedAGRClient {
         
         // Species distribution
         const speciesAgg = geneAggs.find(a => a?.key === 'species');
+        console.debug('DEBUG: speciesAgg found:', { speciesAgg, hasValues: !!speciesAgg?.values, isArray: Array.isArray(speciesAgg?.values) });
         if (speciesAgg?.values && Array.isArray(speciesAgg.values)) {
+          console.debug('DEBUG: About to forEach on speciesAgg.values:', speciesAgg.values.length);
           speciesAgg.values.forEach(v => {
             if (v?.key && typeof v.total === 'number') {
               aggregations.topSpecies[v.key] = v.total;
             }
           });
+          console.debug('DEBUG: forEach completed successfully');
         }
 
         // Disease associations
@@ -778,7 +793,10 @@ class EnhancedAGRClient {
       aggregations.totalResults += entities?.genes?.total || 0;
       aggregations.byCategory.genes = entities?.genes?.total || 0;
     } catch (error) {
-      this.logger.warn('Error computing gene aggregations:', error.message);
+      console.warn('Error computing gene aggregations:', error.message);
+      if (this.logger && this.logger.warn) {
+        this.logger.warn('Error computing gene aggregations:', error.message);
+      }
     }
 
     // Aggregate disease results

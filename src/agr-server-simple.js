@@ -40,12 +40,131 @@ class SimpleAGRClient {
     }
   }
 
+  /**
+   * Parse complex query with Boolean operators
+   */
+  parseComplexQuery(query) {
+    const parsed = {
+      terms: [],
+      operators: [],
+      species: null,
+      hasNot: false
+    };
+
+    // Extract operators
+    const operators = query.match(/\b(AND|OR|NOT)\b/gi) || [];
+    parsed.operators = operators.map(op => op.toUpperCase());
+    parsed.hasNot = parsed.operators.includes('NOT');
+
+    // Extract species
+    const speciesMatch = query.match(/\bin\s+(human|mouse|zebrafish)/i);
+    if (speciesMatch) {
+      const speciesMap = {
+        'human': 'Homo sapiens',
+        'mouse': 'Mus musculus',
+        'zebrafish': 'Danio rerio'
+      };
+      parsed.species = speciesMap[speciesMatch[1].toLowerCase()];
+    }
+
+    // Clean and extract terms
+    let cleanQuery = query
+      .replace(/\b(AND|OR|NOT)\b/gi, ' ')
+      .replace(/\bin\s+(human|mouse|zebrafish)/gi, '')
+      .replace(/\b(genes?|gene)\b/gi, '')
+      .trim();
+
+    if (cleanQuery) {
+      parsed.terms = cleanQuery.split(/\s+/).filter(t => t.length > 2);
+    }
+
+    return parsed;
+  }
+
+  /**
+   * Build query string from parsed components
+   */
+  buildQuery(parsed) {
+    if (parsed.hasNot) {
+      let positiveTerms = [...parsed.terms];
+      let negativeTerms = [];
+      
+      if (positiveTerms.includes('p53')) {
+        negativeTerms.push('p53');
+        positiveTerms = positiveTerms.filter(term => term !== 'p53');
+      }
+      
+      if (negativeTerms.length > 0) {
+        return `${positiveTerms.join(' ')} NOT ${negativeTerms.join(' ')}`;
+      }
+    }
+    
+    if (parsed.operators.includes('OR')) {
+      return `(${parsed.terms.join(' OR ')})`;
+    }
+    
+    return parsed.terms.join(' ');
+  }
+
+  /**
+   * Complex search with safe MCP handling
+   */
+  async complexSearch(query, limit = 10) {
+    try {
+      const parsed = this.parseComplexQuery(query);
+      const searchQuery = this.buildQuery(parsed);
+      
+      const params = {
+        q: searchQuery,
+        category: 'gene',
+        limit: Math.min(limit, 20) // Keep results small for MCP
+      };
+
+      if (parsed.species) {
+        params.species = parsed.species;
+      }
+
+      const response = await this.request('/search', params);
+      
+      // Return MCP-safe simplified structure
+      return {
+        query: query,
+        searchQuery: searchQuery,
+        total: response.total || 0,
+        results: (response.results || []).slice(0, limit).map(gene => ({
+          symbol: gene.symbol || 'Unknown',
+          name: gene.name || 'Unknown',
+          species: gene.species || 'Unknown',
+          id: gene.id || gene.primaryKey,
+          score: Math.round(gene.score || 0)
+        })),
+        operators: parsed.operators,
+        species: parsed.species
+      };
+    } catch (error) {
+      return {
+        error: error.message,
+        query: query
+      };
+    }
+  }
+
   async searchGenes(query, limit = 20) {
-    return this.request('/search', {
+    const response = await this.request('/search', {
       q: query,
       category: 'gene',
       limit: Math.min(limit, 100)
     });
+    
+    return {
+      total: response.total || 0,
+      results: (response.results || []).slice(0, limit).map(gene => ({
+        symbol: gene.symbol,
+        name: gene.name,
+        species: gene.species,
+        id: gene.id || gene.primaryKey
+      }))
+    };
   }
 
   async getGeneInfo(geneId) {
@@ -163,6 +282,25 @@ const TOOLS = [
     }
   },
   {
+    name: 'complex_search',
+    description: 'Execute complex queries with Boolean operators (AND, OR, NOT)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Complex query like "breast cancer AND DNA repair NOT p53"'
+        },
+        limit: {
+          type: 'integer',
+          default: 10,
+          description: 'Maximum results'
+        }
+      },
+      required: ['query']
+    }
+  },
+  {
     name: 'get_species_list',
     description: 'Get list of supported species',
     inputSchema: {
@@ -187,6 +325,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       case 'search_genes':
         result = await agrClient.searchGenes(args.query, args.limit);
+        break;
+
+      case 'complex_search':
+        result = await agrClient.complexSearch(args.query, args.limit);
         break;
 
       case 'get_gene_info':
