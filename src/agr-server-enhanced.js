@@ -420,12 +420,12 @@ class EnhancedAGRClient {
       };
 
       // Add species filter if detected
-      if (parsed.filters.species && parsed.filters.species.length > 0) {
+      if (parsed.filters?.species && Array.isArray(parsed.filters.species) && parsed.filters.species.length > 0) {
         params.species = parsed.filters.species[0];
       }
 
       // Add additional filters
-      if (parsed.filters.chromosomes && parsed.filters.chromosomes.length > 0) {
+      if (parsed.filters?.chromosomes && Array.isArray(parsed.filters.chromosomes) && parsed.filters.chromosomes.length > 0) {
         params.chromosome = parsed.filters.chromosomes[0];
       }
 
@@ -741,38 +741,44 @@ class EnhancedAGRClient {
       topFunctions: []
     };
 
-    // Aggregate gene results
-    if (entities.genes && entities.genes.aggregations) {
-      const geneAggs = entities.genes.aggregations;
-      
-      // Species distribution
-      const speciesAgg = geneAggs.find(a => a.key === 'species');
-      if (speciesAgg && speciesAgg.values) {
-        speciesAgg.values.forEach(v => {
-          aggregations.topSpecies[v.key] = v.total;
-        });
+    try {
+      // Aggregate gene results
+      if (entities?.genes?.aggregations && Array.isArray(entities.genes.aggregations)) {
+        const geneAggs = entities.genes.aggregations;
+        
+        // Species distribution
+        const speciesAgg = geneAggs.find(a => a?.key === 'species');
+        if (speciesAgg?.values && Array.isArray(speciesAgg.values)) {
+          speciesAgg.values.forEach(v => {
+            if (v?.key && typeof v.total === 'number') {
+              aggregations.topSpecies[v.key] = v.total;
+            }
+          });
+        }
+
+        // Disease associations
+        const diseaseAgg = geneAggs.find(a => a?.key === 'diseasesAgrSlim');
+        if (diseaseAgg?.values && Array.isArray(diseaseAgg.values)) {
+          aggregations.topDiseases = diseaseAgg.values.slice(0, 10);
+        }
+
+        // Biological processes
+        const processAgg = geneAggs.find(a => a?.key === 'biologicalProcessAgrSlim');
+        if (processAgg?.values && Array.isArray(processAgg.values)) {
+          aggregations.topProcesses = processAgg.values.slice(0, 10);
+        }
+
+        // Molecular functions
+        const functionAgg = geneAggs.find(a => a?.key === 'molecularFunctionAgrSlim');
+        if (functionAgg?.values && Array.isArray(functionAgg.values)) {
+          aggregations.topFunctions = functionAgg.values.slice(0, 10);
+        }
       }
 
-      // Disease associations
-      const diseaseAgg = geneAggs.find(a => a.key === 'diseasesAgrSlim');
-      if (diseaseAgg && diseaseAgg.values) {
-        aggregations.topDiseases = diseaseAgg.values.slice(0, 10);
-      }
-
-      // Biological processes
-      const processAgg = geneAggs.find(a => a.key === 'biologicalProcessAgrSlim');
-      if (processAgg && processAgg.values) {
-        aggregations.topProcesses = processAgg.values.slice(0, 10);
-      }
-
-      // Molecular functions
-      const functionAgg = geneAggs.find(a => a.key === 'molecularFunctionAgrSlim');
-      if (functionAgg && functionAgg.values) {
-        aggregations.topFunctions = functionAgg.values.slice(0, 10);
-      }
-
-      aggregations.totalResults += entities.genes.total || 0;
-      aggregations.byCategory.genes = entities.genes.total || 0;
+      aggregations.totalResults += entities?.genes?.total || 0;
+      aggregations.byCategory.genes = entities?.genes?.total || 0;
+    } catch (error) {
+      this.logger.warn('Error computing gene aggregations:', error.message);
     }
 
     // Aggregate disease results
@@ -1233,7 +1239,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
 
       case 'complex_search':
-        result = await agrClient.complexSearch(args.query, { limit: args.limit });
+        try {
+          result = await agrClient.complexSearch(args.query, { limit: args.limit });
+        } catch (error) {
+          logger.error('Complex search error:', error);
+          result = { 
+            error: error.message,
+            query: args.query,
+            timestamp: new Date().toISOString()
+          };
+        }
         break;
 
       case 'faceted_search':
@@ -1272,11 +1287,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const duration = Date.now() - startTime;
     logger.info({ tool: name, duration }, 'Tool execution completed');
 
+    // Safe JSON serialization
+    let resultText;
+    try {
+      resultText = JSON.stringify(result, (key, value) => {
+        // Handle circular references and undefined values
+        if (typeof value === 'undefined') return null;
+        if (value === null) return null;
+        return value;
+      }, 2);
+    } catch (serializationError) {
+      resultText = JSON.stringify({
+        error: 'Serialization failed',
+        message: serializationError.message,
+        tool: name
+      }, null, 2);
+    }
+
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2)
+          text: resultText
         }
       ]
     };

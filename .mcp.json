@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "agr-genomics": {
+      "type": "stdio",
+      "command": "agr-mcp-server",
+      "args": [],
+      "env": {}
+    }
+  }
+}
