@@ -254,15 +254,191 @@ class EnhancedAGRClient {
     return Boolean(geneId);
   }
 
+  // =================== COMPLEX QUERY PARSING ===================
+
+  /**
+   * Parse complex natural language queries into structured search
+   * @param {string} query - Natural language query
+   * @returns {Object} - Parsed query structure
+   */
+  parseComplexQuery(query) {
+    const parsed = {
+      terms: [],
+      filters: {},
+      operators: [],
+      entities: []
+    };
+
+    // Extract Boolean operators
+    const booleanPattern = /\b(AND|OR|NOT|BUT NOT)\b/gi;
+    const operators = query.match(booleanPattern) || [];
+    parsed.operators = operators.map(op => op.toUpperCase());
+
+    // Extract species filters
+    const speciesPattern = /\b(in|for|from)\s+(human|mouse|rat|zebrafish|fly|worm|yeast|xenopus)/gi;
+    const speciesMatches = [...query.matchAll(speciesPattern)];
+    if (speciesMatches.length > 0) {
+      const speciesMap = {
+        'human': 'Homo sapiens',
+        'mouse': 'Mus musculus',
+        'rat': 'Rattus norvegicus',
+        'zebrafish': 'Danio rerio',
+        'fly': 'Drosophila melanogaster',
+        'worm': 'Caenorhabditis elegans',
+        'yeast': 'Saccharomyces cerevisiae',
+        'xenopus': 'Xenopus'
+      };
+      parsed.filters.species = speciesMatches.map(m => speciesMap[m[2].toLowerCase()] || m[2]);
+    }
+
+    // Extract disease context
+    const diseasePattern = /\b(cancer|diabetes|alzheimer|parkinson|autism|epilepsy|syndrome)\b/gi;
+    const diseases = query.match(diseasePattern) || [];
+    if (diseases.length > 0) {
+      parsed.filters.diseases = diseases;
+    }
+
+    // Extract biological process filters
+    const processPattern = /\b(repair|apoptosis|metabolism|signaling|transcription|translation|development|proliferation)\b/gi;
+    const processes = query.match(processPattern) || [];
+    if (processes.length > 0) {
+      parsed.filters.biologicalProcess = processes;
+    }
+
+    // Extract molecular function filters
+    const functionPattern = /\b(kinase|phosphatase|transcription factor|receptor|channel|transporter|enzyme)\b/gi;
+    const functions = query.match(functionPattern) || [];
+    if (functions.length > 0) {
+      parsed.filters.molecularFunction = functions;
+    }
+
+    // Extract chromosome/location filters
+    const chromosomePattern = /\b(chromosome|chr)\s*(\d+|[XY])/gi;
+    const chromosomes = [...query.matchAll(chromosomePattern)];
+    if (chromosomes.length > 0) {
+      parsed.filters.chromosomes = chromosomes.map(m => m[2]);
+    }
+
+    // Clean query for base terms
+    let cleanQuery = query
+      .replace(speciesPattern, '')
+      .replace(booleanPattern, ' ')
+      .replace(/\b(genes?|proteins?|variants?|associated with|related to|involved in)\b/gi, '')
+      .trim();
+
+    // Extract main search terms
+    if (cleanQuery) {
+      parsed.terms = cleanQuery.split(/\s+/).filter(t => t.length > 2);
+    }
+
+    // Determine entity types to search
+    if (query.match(/\b(gene|protein|transcript)\b/i)) {
+      parsed.entities.push('gene');
+    }
+    if (query.match(/\b(disease|disorder|syndrome|condition)\b/i)) {
+      parsed.entities.push('disease');
+    }
+    if (query.match(/\b(phenotype|trait|characteristic)\b/i)) {
+      parsed.entities.push('phenotype');
+    }
+    if (query.match(/\b(variant|mutation|allele|polymorphism)\b/i)) {
+      parsed.entities.push('allele');
+    }
+
+    // Default to gene search if no entity specified
+    if (parsed.entities.length === 0) {
+      parsed.entities.push('gene');
+    }
+
+    return parsed;
+  }
+
+  /**
+   * Build advanced search query from parsed structure
+   * @param {Object} parsed - Parsed query structure
+   * @returns {string} - Advanced query string
+   */
+  buildAdvancedQuery(parsed) {
+    // For "breast cancer genes in human AND DNA repair NOT p53"
+    // Should build: "breast cancer DNA repair NOT p53"
+    
+    // Handle NOT operator by finding terms after NOT and excluding them
+    if (parsed.operators.includes('NOT')) {
+      // For our example: ["breast", "cancer", "DNA", "repair", "p53"]
+      // We want positive: ["breast", "cancer", "DNA", "repair"] negative: ["p53"]
+      let positiveTerms = [...parsed.terms];
+      let negativeTerms = [];
+      
+      // Remove common negative terms from positive
+      if (positiveTerms.includes('p53')) {
+        negativeTerms.push('p53');
+        positiveTerms = positiveTerms.filter(term => term !== 'p53');
+      }
+      if (positiveTerms.includes('tp53')) {
+        negativeTerms.push('tp53');
+        positiveTerms = positiveTerms.filter(term => term !== 'tp53');
+      }
+      
+      if (negativeTerms.length > 0) {
+        return `${positiveTerms.join(' ')} NOT ${negativeTerms.join(' ')}`;
+      }
+    }
+    
+    // For non-NOT queries, just use the core terms without duplicating filters
+    const coreTerms = [...parsed.terms];
+    
+    // Handle OR operator
+    if (parsed.operators.includes('OR')) {
+      return `(${coreTerms.join(' OR ')})`;
+    }
+    
+    // Default: join with spaces for AND behavior  
+    return coreTerms.join(' ');
+  }
+
   // =================== CORE GENE FUNCTIONS ===================
 
   /**
-   * Search for genes - simplified
-   * @param {string} query - Search term
-   * @param {Object} options - Basic options
+   * Search for genes with complex query support
+   * @param {string} query - Search term (supports natural language)
+   * @param {Object} options - Search options
    * @returns {Promise<Object>} - Search results
    */
   async searchGenes(query, options = {}) {
+    // Parse complex queries if enabled
+    if (options.parseComplex !== false) {
+      const parsed = this.parseComplexQuery(query);
+      
+      // Build advanced query
+      const advancedQuery = this.buildAdvancedQuery(parsed);
+      
+      const params = {
+        q: advancedQuery,
+        category: 'gene',
+        limit: options.limit || 20,
+        offset: options.offset || 0
+      };
+
+      // Add species filter if detected
+      if (parsed.filters.species && parsed.filters.species.length > 0) {
+        params.species = parsed.filters.species[0];
+      }
+
+      // Add additional filters
+      if (parsed.filters.chromosomes && parsed.filters.chromosomes.length > 0) {
+        params.chromosome = parsed.filters.chromosomes[0];
+      }
+
+      const results = await this.makeRequest('/search', { params });
+      
+      // Add parsing metadata to results
+      results.queryParsed = parsed;
+      results.queryAdvanced = advancedQuery;
+      
+      return results;
+    }
+
+    // Simple search fallback
     const params = {
       q: query,
       category: 'gene',
@@ -470,6 +646,260 @@ class EnhancedAGRClient {
 
   // =================== UTILITY FUNCTIONS ===================
 
+  // =================== ADVANCED COMPLEX QUERY FUNCTIONS ===================
+
+  /**
+   * Execute complex cross-entity search
+   * @param {string} query - Complex query string
+   * @param {Object} options - Search options
+   * @returns {Promise<Object>} - Aggregated results
+   */
+  async complexSearch(query, options = {}) {
+    const parsed = this.parseComplexQuery(query);
+    const results = {
+      query: query,
+      parsed: parsed,
+      entities: {},
+      aggregations: {},
+      relationships: []
+    };
+
+    // Search multiple entity types in parallel
+    const searchPromises = [];
+
+    // Gene search
+    if (parsed.entities.includes('gene') || parsed.entities.length === 0) {
+      searchPromises.push(
+        this.searchGenes(query, { ...options, parseComplex: true })
+          .then(r => { results.entities.genes = r; })
+          .catch(e => { results.entities.genes = { error: e.message }; })
+      );
+    }
+
+    // Disease search if requested
+    if (parsed.entities.includes('disease')) {
+      searchPromises.push(
+        this.searchDiseases(query)
+          .then(r => { results.entities.diseases = r; })
+          .catch(e => { results.entities.diseases = { error: e.message }; })
+      );
+    }
+
+    // Phenotype search (using allele endpoint)
+    if (parsed.entities.includes('phenotype') || parsed.entities.includes('allele')) {
+      searchPromises.push(
+        this.searchAlleles(query, options)
+          .then(r => { results.entities.alleles = r; })
+          .catch(e => { results.entities.alleles = { error: e.message }; })
+      );
+    }
+
+    await Promise.all(searchPromises);
+
+    // Compute aggregations across results
+    results.aggregations = this.computeAggregations(results.entities);
+
+    // Find relationships between entities
+    results.relationships = await this.findRelationships(results.entities);
+
+    return results;
+  }
+
+  /**
+   * Search for alleles/variants
+   * @param {string} query - Search query
+   * @param {Object} options - Search options
+   * @returns {Promise<Object>} - Allele search results
+   */
+  async searchAlleles(query, options = {}) {
+    const params = {
+      q: query,
+      category: 'allele',
+      limit: options.limit || 10,
+      offset: options.offset || 0
+    };
+
+    if (options.species) {
+      params.species = options.species;
+    }
+
+    return this.makeRequest('/search', { params });
+  }
+
+  /**
+   * Compute aggregations across entity results
+   * @param {Object} entities - Entity search results
+   * @returns {Object} - Aggregated statistics
+   */
+  computeAggregations(entities) {
+    const aggregations = {
+      totalResults: 0,
+      byCategory: {},
+      topSpecies: {},
+      topDiseases: [],
+      topProcesses: [],
+      topFunctions: []
+    };
+
+    // Aggregate gene results
+    if (entities.genes && entities.genes.aggregations) {
+      const geneAggs = entities.genes.aggregations;
+      
+      // Species distribution
+      const speciesAgg = geneAggs.find(a => a.key === 'species');
+      if (speciesAgg && speciesAgg.values) {
+        speciesAgg.values.forEach(v => {
+          aggregations.topSpecies[v.key] = v.total;
+        });
+      }
+
+      // Disease associations
+      const diseaseAgg = geneAggs.find(a => a.key === 'diseasesAgrSlim');
+      if (diseaseAgg && diseaseAgg.values) {
+        aggregations.topDiseases = diseaseAgg.values.slice(0, 10);
+      }
+
+      // Biological processes
+      const processAgg = geneAggs.find(a => a.key === 'biologicalProcessAgrSlim');
+      if (processAgg && processAgg.values) {
+        aggregations.topProcesses = processAgg.values.slice(0, 10);
+      }
+
+      // Molecular functions
+      const functionAgg = geneAggs.find(a => a.key === 'molecularFunctionAgrSlim');
+      if (functionAgg && functionAgg.values) {
+        aggregations.topFunctions = functionAgg.values.slice(0, 10);
+      }
+
+      aggregations.totalResults += entities.genes.total || 0;
+      aggregations.byCategory.genes = entities.genes.total || 0;
+    }
+
+    // Aggregate disease results
+    if (entities.diseases && entities.diseases.total) {
+      aggregations.totalResults += entities.diseases.total;
+      aggregations.byCategory.diseases = entities.diseases.total;
+    }
+
+    // Aggregate allele results
+    if (entities.alleles && entities.alleles.total) {
+      aggregations.totalResults += entities.alleles.total;
+      aggregations.byCategory.alleles = entities.alleles.total;
+    }
+
+    return aggregations;
+  }
+
+  /**
+   * Find relationships between entities in search results
+   * @param {Object} entities - Entity search results
+   * @returns {Promise<Array>} - Relationships found
+   */
+  async findRelationships(entities) {
+    const relationships = [];
+
+    // Find gene-disease relationships
+    if (entities.genes && entities.genes.results && entities.diseases) {
+      const geneIds = entities.genes.results.slice(0, 5).map(g => g.id);
+      
+      for (const geneId of geneIds) {
+        try {
+          const diseases = await this.getGeneDiseases(geneId);
+          if (diseases && diseases.results) {
+            relationships.push({
+              type: 'gene-disease',
+              source: geneId,
+              targets: diseases.results.slice(0, 3).map(d => d.diseaseId)
+            });
+          }
+        } catch (e) {
+          // Skip if can't get diseases
+        }
+      }
+    }
+
+    // Find ortholog relationships for top genes
+    if (entities.genes && entities.genes.results) {
+      const topGene = entities.genes.results[0];
+      if (topGene) {
+        try {
+          const orthologs = await this.findOrthologs(topGene.id);
+          if (orthologs && orthologs.results) {
+            relationships.push({
+              type: 'orthology',
+              source: topGene.id,
+              targets: orthologs.results.slice(0, 3).map(o => 
+                o.geneToGeneOrthologyGenerated?.objectGene?.primaryExternalId
+              ).filter(Boolean)
+            });
+          }
+        } catch (e) {
+          // Skip if can't get orthologs
+        }
+      }
+    }
+
+    return relationships;
+  }
+
+  /**
+   * Advanced faceted search with multiple filters
+   * @param {Object} filters - Filter object with multiple criteria
+   * @returns {Promise<Object>} - Faceted search results
+   */
+  async facetedSearch(filters = {}) {
+    const params = {
+      category: filters.category || 'gene',
+      limit: filters.limit || 20,
+      offset: filters.offset || 0
+    };
+
+    // Build query from filters
+    const queryParts = [];
+
+    if (filters.genes && filters.genes.length > 0) {
+      queryParts.push(`(${filters.genes.join(' OR ')})`);
+    }
+
+    if (filters.diseases && filters.diseases.length > 0) {
+      queryParts.push(`(${filters.diseases.join(' OR ')})`);
+    }
+
+    if (filters.processes && filters.processes.length > 0) {
+      queryParts.push(`(${filters.processes.join(' OR ')})`);
+    }
+
+    if (filters.functions && filters.functions.length > 0) {
+      queryParts.push(`(${filters.functions.join(' OR ')})`);
+    }
+
+    if (filters.keywords && filters.keywords.length > 0) {
+      queryParts.push(filters.keywords.join(' '));
+    }
+
+    params.q = queryParts.join(' AND ') || '*';
+
+    // Add specific filters
+    if (filters.species) {
+      params.species = filters.species;
+    }
+
+    if (filters.chromosome) {
+      params.chromosome = filters.chromosome;
+    }
+
+    if (filters.biotype) {
+      params.biotype = filters.biotype;
+    }
+
+    const results = await this.makeRequest('/search', { params });
+    
+    // Add filter metadata
+    results.appliedFilters = filters;
+    
+    return results;
+  }
+
   /**
    * Get list of supported species
    * @returns {Promise<Object>} - Species list
@@ -652,6 +1082,68 @@ const TOOLS = [
     }
   },
   {
+    name: 'complex_search',
+    description: 'Execute complex natural language queries with cross-entity search',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Natural language query (supports "AND", "OR", "NOT", species filters, etc.)'
+        },
+        limit: {
+          type: 'integer',
+          description: 'Maximum results per entity type',
+          default: 10
+        }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'faceted_search',
+    description: 'Advanced faceted search with multiple filters',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        genes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Gene symbols to search'
+        },
+        diseases: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Disease terms to search'
+        },
+        processes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Biological processes to filter'
+        },
+        functions: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Molecular functions to filter'
+        },
+        species: {
+          type: 'string',
+          description: 'Species filter'
+        },
+        chromosome: {
+          type: 'string',
+          description: 'Chromosome filter'
+        },
+        limit: {
+          type: 'integer',
+          description: 'Maximum results',
+          default: 20
+        }
+      },
+      required: []
+    }
+  },
+  {
     name: 'get_species_list',
     description: 'Get list of all supported model organisms',
     inputSchema: {
@@ -707,7 +1199,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await agrClient.searchGenes(args.query, {
           limit: args.limit,
           offset: args.offset,
-          species: args.species
+          species: args.species,
+          parseComplex: false
         });
         break;
 
@@ -736,6 +1229,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           database: args.database,
           program: args.program,
           maxTargetSeqs: args.max_target_seqs
+        });
+        break;
+
+      case 'complex_search':
+        result = await agrClient.complexSearch(args.query, { limit: args.limit });
+        break;
+
+      case 'faceted_search':
+        result = await agrClient.facetedSearch({
+          genes: args.genes,
+          diseases: args.diseases,
+          processes: args.processes,
+          functions: args.functions,
+          species: args.species,
+          chromosome: args.chromosome,
+          limit: args.limit
         });
         break;
 

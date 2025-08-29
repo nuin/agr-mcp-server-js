@@ -35,8 +35,24 @@ npm start
 - **Gene Information**: `npm run query info HGNC:1100`
 - **Cache Statistics**: `npm run query cache`
 
+## Complex Natural Language Queries (NEW!)
+- **Boolean NOT**: `npm run query complex "breast cancer genes in human AND DNA repair NOT p53"`
+- **Boolean OR**: `npm run query complex "insulin OR glucose in mouse"`
+- **Species Filter**: `npm run query complex "BRCA1 in human"`
+- **Process Filter**: `npm run query complex "apoptosis genes NOT p53 in zebrafish"`
+- **Multi-Entity**: `npm run query complex "diabetes genes and insulin signaling"`
+
+### Supported Boolean Operators
+- **AND**: Combine multiple criteria (implicit between terms)
+- **OR**: Alternative terms (`gene1 OR gene2`)
+- **NOT**: Exclude specific terms (`DNA repair NOT p53`)
+- **Species**: `in human`, `in mouse`, `in zebrafish`, etc.
+- **Process**: Automatically detects biological processes
+- **Disease**: Recognizes disease terms for filtering
+
 ## Natural Language CLI Interface
 - **Direct CLI**: `alliance "find BRCA1 genes in xenopus"`
+- **Complex Query**: `alliance "DNA repair genes NOT p53 in human"`
 - **Disease Search**: `alliance "search for breast cancer diseases"`
 - **Gene Info**: `alliance "get information about HGNC:1100"`
 - **Install Globally**: `npm install -g .` (enables `alliance` command)
@@ -64,16 +80,19 @@ This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in
 - `scripts/`: Utility scripts for health checks, benchmarking, and demos
 - `config/claude-desktop-config.json`: Claude Desktop MCP configuration
 
-### Available MCP Tools (9 total)
+### Available MCP Tools (12 total)
 1. `search_genes` - Gene search with species filtering
 2. `get_gene_info` - Detailed gene information
 3. `get_gene_diseases` - Disease associations
 4. `search_diseases` - Disease search functionality
 5. `get_gene_expression` - Expression data across tissues
 6. `find_orthologs` - Cross-species orthology analysis
-7. `get_species_list` - Supported model organisms
-8. `get_cache_stats` - Performance monitoring
-9. `clear_cache` - Cache management
+7. `blast_sequence` - BLAST search with auto-detection
+8. `complex_search` - Natural language queries with Boolean operators (AND, OR, NOT)
+9. `faceted_search` - Multi-dimensional filtering with aggregations
+10. `get_species_list` - Supported model organisms
+11. `get_cache_stats` - Performance monitoring
+12. `clear_cache` - Cache management
 
 ### API Endpoints Used
 - Main API: `https://www.alliancegenome.org/api`
@@ -258,6 +277,27 @@ Once installed in Claude Code, you can use natural language:
 **"Find genes associated with DNA repair"**
 - Semantic search capabilities
 - Returns relevant gene families
+
+### Complex Query Usage Examples
+
+**Real Examples That Work:**
+```bash
+# DNA repair genes excluding p53 in humans
+npm run query complex "breast cancer genes in human AND DNA repair NOT p53"
+# Result: 6,021 genes (XRCC3, XRCC1, RAD50, ERCC1, etc.)
+
+# Metabolic genes in mouse model
+npm run query complex "insulin OR glucose in mouse"
+# Result: 28 genes (Insl5, Igfbp7, Irs3, Ide, etc.)
+
+# Species-specific BRCA1 research
+npm run query complex "BRCA1 in human"
+# Result: 29 human BRCA1-related genes
+
+# Exclude common genes for focused research
+npm run query complex "apoptosis genes NOT p53 in zebrafish"
+# Result: Apoptosis pathway genes excluding TP53
+```
 
 ### Troubleshooting
 

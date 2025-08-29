@@ -49,6 +49,16 @@ const queries = {
     }
   }),
 
+  complex: (query, limit = 10) => ({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'tools/call',
+    params: {
+      name: 'complex_search',
+      arguments: { query, limit }
+    }
+  }),
+
   blast: (sequence, max_target_seqs = 5) => ({
     jsonrpc: '2.0',
     id: 1,
@@ -154,12 +164,15 @@ if (!command) {
   console.log('  genes <query>     - Search for genes');
   console.log('  diseases <query>  - Search for diseases');
   console.log('  info <gene_id>    - Get gene information');
+  console.log('  complex <query>   - Complex natural language query with Boolean operators');
   console.log('  cache             - Show cache statistics');
   console.log('  blast <sequence>  - BLAST sequence search\n');
   console.log('Examples:');
   console.log('  node easy-query.js genes BRCA1');
   console.log('  node easy-query.js diseases "breast cancer"');
   console.log('  node easy-query.js info HGNC:1100');
+  console.log('  node easy-query.js complex "breast cancer genes in human AND DNA repair NOT p53"');
+  console.log('  node easy-query.js complex "insulin OR glucose in mouse"');
   console.log('  node easy-query.js cache');
 } else {
   runQuery(command, query);

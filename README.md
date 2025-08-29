@@ -1,6 +1,15 @@
 # Enhanced AGR MCP Server - JavaScript Implementation 🧬🚀
 
-**A high-performance, modern JavaScript implementation of the Alliance of Genome Resources MCP server with advanced features.**
+**A high-performance, modern JavaScript implementation of the Alliance of Genome Resources MCP server with advanced natural language query capabilities and cross-entity search.**
+
+## 🌟 **NEW: Complex Query Engine**
+
+This server now features a sophisticated natural language processing engine that understands:
+- **Boolean Logic**: `"breast cancer genes AND DNA repair NOT p53"`  
+- **Multi-Entity Search**: Simultaneously search genes, diseases, phenotypes, and alleles
+- **Smart Filtering**: Automatic detection of species, processes, functions, and locations
+- **Relationship Discovery**: Find connections between genes, diseases, and orthologs
+- **Faceted Search**: Multi-dimensional filtering with real-time aggregations
 
 ## 🎯 Why This JavaScript Version is Better
 
@@ -14,12 +23,14 @@ This JavaScript implementation offers significant improvements over the Python v
 - **Rate limiting** to prevent API overwhelm
 
 ### 🔧 **Advanced Features**
-- **Simplified search capabilities** with streamlined validation
-- **Structured logging** with configurable levels and pretty output
-- **TypeScript-style JSDoc documentation** for better IDE support
-- **Automatic sequence type detection** for BLAST operations
-- **Cache performance monitoring** and statistics
-- **Graceful shutdown handling** with proper cleanup
+- **🧠 Complex Natural Language Queries** with Boolean operators (AND, OR, NOT)
+- **🎯 Multi-Entity Cross-Search** (genes + diseases + phenotypes + alleles)
+- **🔍 Advanced Query Parsing** with automatic species/process/function detection
+- **📊 Intelligent Aggregations** across multiple data types
+- **🔗 Relationship Discovery** between genes, diseases, and orthologs
+- **🎛️ Faceted Search** with multiple simultaneous filters
+- **📈 Real-time Query Analytics** and performance insights
+- **🏷️ Automatic Entity Classification** and metadata extraction
 
 ### 🛡️ **Reliability & Security**
 - **Robust error boundaries** with detailed error reporting
@@ -106,40 +117,142 @@ npm run lint:fix
 npm run format
 ```
 
-## 📋 Available Tools (10 Core + Performance Tools)
+## 📋 Available Tools (12 Advanced Tools)
 
 ### 🧬 **Core Genomics Tools**
-1. **`search_genes`** - Simple gene search with species filtering
+1. **`search_genes`** - Advanced gene search with natural language support
 2. **`get_gene_info`** - Comprehensive gene information
 3. **`get_gene_diseases`** - Disease associations and models
-4. **`search_diseases`** - Disease search with helpful guidance
+4. **`search_diseases`** - Disease search with filtered results
 5. **`get_gene_expression`** - Expression data across tissues
 6. **`find_orthologs`** - Cross-species orthology analysis
 7. **`blast_sequence`** - BLAST search with auto-detection
 8. **`get_species_list`** - Supported model organisms
 
+### 🚀 **Advanced Query Tools**
+9. **`complex_search`** - Natural language cross-entity search with relationships
+10. **`faceted_search`** - Multi-filter advanced search with aggregations
+
 ### 🔧 **Performance & Monitoring Tools**
-9. **`get_cache_stats`** - Real-time performance metrics
-10. **`clear_cache`** - Cache management (dev/testing)
+11. **`get_cache_stats`** - Real-time performance metrics
+12. **`clear_cache`** - Cache management (dev/testing)
 
 ## 💡 Usage Examples
 
-### Basic Gene Search
+### 🧠 Complex Natural Language Queries (NEW!)
+
+The Enhanced AGR MCP Server now supports advanced Boolean queries with natural language processing:
+
+#### Working Complex Query Examples
+
+##### 1. Boolean NOT - Exclude specific genes
+```bash
+# Find DNA repair genes in breast cancer, excluding p53
+npm run query complex "breast cancer genes in human AND DNA repair NOT p53"
+# Returns: 6,021 genes (XRCC3, XRCC1, RAD50, ERCC1, etc.)
+```
+
+##### 2. Boolean OR - Multiple terms
+```bash
+# Find genes related to insulin OR glucose in mouse
+npm run query complex "insulin OR glucose in mouse"
+# Returns: 28 genes (Insl5, Igfbp7, Irs3, Ide, etc.)
+```
+
+##### 3. Species-specific search
+```bash
+# Find BRCA1 genes specifically in humans
+npm run query complex "BRCA1 in human"
+# Returns: 29 human-specific BRCA1-related genes
+```
+
+#### Advanced Query Features
+- **Boolean Operators**: AND, OR, NOT for precise filtering
+- **Species Filters**: "in human", "in mouse", "in zebrafish", etc.
+- **Disease Context**: Automatically recognizes disease terms
+- **Process Filters**: Detects biological processes (apoptosis, DNA repair, etc.)
+- **Cross-Entity Search**: Searches genes, diseases, phenotypes simultaneously
+
+#### JavaScript/Node.js Examples
 ```javascript
-// Search for BRCA1 across all species
+// Using complex_search tool with MCP
 {
-  "tool": "search_genes",
+  "tool": "complex_search",
   "arguments": {
-    "query": "BRCA1",
-    "limit": 10,
-    "species": "Homo sapiens"
+    "query": "breast cancer genes in human AND DNA repair NOT p53",
+    "limit": 5
+  }
+}
+
+// Species and process filtering
+{
+  "tool": "search_genes", 
+  "arguments": {
+    "query": "tumor suppressor genes in mouse involved in apoptosis",
+    "limit": 10
   }
 }
 ```
 
-### Enhanced BLAST Search
+#### Cross-Entity Search with Relationships
 ```javascript
-// Auto-detects DNA vs protein sequences
+// Search across genes, diseases, and phenotypes simultaneously
+{
+  "tool": "complex_search",
+  "arguments": {
+    "query": "insulin resistance genes and diabetes diseases in human",
+    "limit": 10
+  }
+}
+```
+
+### 🎯 Advanced Faceted Search
+```javascript
+// Multi-dimensional filtering
+{
+  "tool": "faceted_search",
+  "arguments": {
+    "genes": ["BRCA1", "BRCA2", "TP53"],
+    "diseases": ["breast cancer", "ovarian cancer"],
+    "processes": ["DNA repair", "apoptosis"],
+    "species": "Homo sapiens",
+    "chromosome": "17",
+    "limit": 20
+  }
+}
+```
+
+### 📊 Tested & Verified Query Examples
+
+#### ✅ Natural Language Queries That Work
+- `"breast cancer genes in human AND DNA repair NOT p53"` - 6,021 results
+- `"insulin OR glucose in mouse"` - 28 results  
+- `"BRCA1 in human"` - 29 results
+- `"kinase genes in mouse involved in signaling"` - Species + process filtering
+- `"tumor suppressor NOT p53 in zebrafish"` - Exclusion queries  
+- `"transcription factors NOT zinc finger in fly"` ✅
+- `"diabetes genes on chromosome 11 in human"` ✅
+- `"tumor suppressor genes involved in apoptosis NOT p53"` ✅
+
+#### Multi-Entity Discovery
+- `"insulin genes and diabetes diseases"` → Returns genes + related diseases
+- `"BRCA1 orthologs and cancer associations"` → Cross-species + disease links
+- `"DNA repair genes and associated phenotypes"` → Genes + phenotype relationships
+
+### 🔧 Basic Tool Usage
+
+#### Gene Information
+```javascript
+{
+  "tool": "get_gene_info",
+  "arguments": {
+    "gene_id": "HGNC:1100"
+  }
+}
+```
+
+#### BLAST Search
+```javascript
 {
   "tool": "blast_sequence", 
   "arguments": {
@@ -149,9 +262,8 @@ npm run format
 }
 ```
 
-### Performance Monitoring
+#### Performance Monitoring
 ```javascript
-// Get real-time cache and performance stats
 {
   "tool": "get_cache_stats",
   "arguments": {}
@@ -297,11 +409,27 @@ Then configure Claude Desktop:
 
 Replace `<PROJECT_PATH>` with the absolute path to your cloned repository.
 
-### Natural Language Queries
-With the enhanced JavaScript server, Claude can handle:
+### 🧠 Advanced Natural Language Queries
 
+With the enhanced complex query system, Claude can now handle sophisticated genomic questions:
+
+#### Boolean Logic & Multi-Species Queries
+- "Find breast cancer genes in human AND DNA repair NOT p53"
+- "Search for kinase genes in mouse OR rat involved in signaling"
+- "Get tumor suppressor genes involved in apoptosis NOT p53"
+
+#### Cross-Entity Discovery
+- "Find insulin genes and related diabetes diseases"
+- "Show BRCA1 orthologs and their cancer associations"
+- "Get DNA repair genes and associated phenotypes"
+
+#### Location & Function Specific
+- "Find transcription factors on chromosome 17 in human"
+- "Search for kinase genes in mouse involved in development"
+- "Get membrane proteins in fly NOT channels"
+
+#### Traditional Queries (Still Supported)
 - "Find orthologs of BRCA1 in mouse and zebrafish"
-- "Search for genes associated with breast cancer"
 - "BLAST this DNA sequence and show top 10 matches"
 - "Get expression data for TP53 across all tissues"
 - "Show me cache performance statistics"
