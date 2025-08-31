@@ -5,7 +5,11 @@
   "type": "module",
   "main": "src/agr-server-enhanced.js",
   "bin": {
-    "agr-mcp-server": "src/agr-server-simple.js"
+    "agr-mcp-server": "src/agr-server-simple.js",
+    "agr-mcp-natural": "src/agr-server-simple-natural.js",
+    "alliance": "bin/alliance.js",
+    "agr-chat": "bin/agr-chat.js",
+    "agr": "bin/agr-chat.js"
   },
   "scripts": {
     "start": "node src/agr-server-enhanced.js",
