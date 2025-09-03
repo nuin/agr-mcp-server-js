@@ -29,6 +29,7 @@ import {
 import axios from 'axios';
 import NodeCache from 'node-cache';
 import pino from 'pino';
+import { LiteratureMiningClient } from './scientific/literature-mining.js';
 
 // Enhanced configuration
 const CONFIG = {
@@ -967,6 +968,13 @@ class EnhancedAGRClient {
 // Initialize the enhanced AGR client
 const agrClient = new EnhancedAGRClient();
 
+// Initialize scientific modules
+const literatureMiningClient = new LiteratureMiningClient({
+  email: 'agr-mcp-server@example.com',
+  tool: 'AGR-MCP-Server',
+  retmax: 100
+});
+
 // Create the MCP server
 const server = new Server(
   {
@@ -1198,6 +1206,91 @@ const TOOLS = [
       },
       required: []
     }
+  },
+  {
+    name: 'search_literature',
+    description: 'Search PubMed for gene-related scientific literature',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Gene symbol to search for (e.g., BRCA1, TP53)'
+        },
+        keywords: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Additional keywords to include in search'
+        },
+        date_range: {
+          type: 'object',
+          properties: {
+            start_year: { type: 'integer' },
+            end_year: { type: 'integer' }
+          },
+          description: 'Publication date range filter'
+        },
+        max_results: {
+          type: 'integer',
+          description: 'Maximum number of papers to return (default: 50)',
+          default: 50
+        },
+        sort_by: {
+          type: 'string',
+          enum: ['relevance', 'date'],
+          description: 'Sort results by relevance or publication date',
+          default: 'relevance'
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'find_gene_relationships',
+    description: 'Find gene relationships from literature co-mentions',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Primary gene symbol to analyze'
+        },
+        max_genes: {
+          type: 'integer',
+          description: 'Maximum related genes to return (default: 20)',
+          default: 20
+        },
+        min_co_occurrence: {
+          type: 'integer',
+          description: 'Minimum co-occurrence threshold (default: 2)',
+          default: 2
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'analyze_research_trends',
+    description: 'Track research publication trends for a gene over time',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Gene symbol to analyze trends for'
+        },
+        start_year: {
+          type: 'integer',
+          description: 'Start year for trend analysis (default: 2000)',
+          default: 2000
+        },
+        end_year: {
+          type: 'integer',
+          description: 'End year for trend analysis (default: current year)'
+        }
+      },
+      required: ['gene_symbol']
+    }
   }
 ];
 
@@ -1296,6 +1389,32 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'clear_cache':
         agrClient.clearCache(args.pattern);
         result = { message: 'Cache cleared successfully' };
+        break;
+
+      case 'search_literature':
+        result = await literatureMiningClient.searchLiterature(args.gene_symbol, {
+          keywords: args.keywords,
+          dateRange: args.date_range ? {
+            startYear: args.date_range.start_year,
+            endYear: args.date_range.end_year
+          } : null,
+          maxResults: args.max_results,
+          sortBy: args.sort_by
+        });
+        break;
+
+      case 'find_gene_relationships':
+        result = await literatureMiningClient.findGeneRelationships(args.gene_symbol, {
+          maxGenes: args.max_genes,
+          minCoOccurrence: args.min_co_occurrence
+        });
+        break;
+
+      case 'analyze_research_trends':
+        result = await literatureMiningClient.analyzeResearchTrends(args.gene_symbol, {
+          startYear: args.start_year,
+          endYear: args.end_year
+        });
         break;
 
       default:
