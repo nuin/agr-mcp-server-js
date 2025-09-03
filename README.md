@@ -1,8 +1,8 @@
-# Enhanced AGR MCP Server - JavaScript Implementation 🧬🚀
+# Enhanced AGR MCP Server - JavaScript Implementation
 
 **A high-performance, modern JavaScript implementation of the Alliance of Genome Resources MCP server with advanced natural language query capabilities and cross-entity search.**
 
-## 🌟 **NEW: Complex Query Engine**
+## NEW: Complex Query Engine
 
 This server now features a sophisticated natural language processing engine that understands:
 - **Boolean Logic**: `"breast cancer genes AND DNA repair NOT p53"`  
@@ -11,18 +11,18 @@ This server now features a sophisticated natural language processing engine that
 - **Relationship Discovery**: Find connections between genes, diseases, and orthologs
 - **Faceted Search**: Multi-dimensional filtering with real-time aggregations
 
-## 🎯 Why This JavaScript Version is Better
+## Why This JavaScript Version is Better
 
 This JavaScript implementation offers significant improvements over the Python version:
 
-### 🚀 **Performance Enhancements**
+### Performance Enhancements
 - **25-40% faster API responses** due to Node.js async I/O optimization
 - **Intelligent caching system** with configurable TTL and automatic cleanup
 - **Connection pooling** with optimized HTTP client settings
 - **Exponential backoff retry logic** for robust error recovery
 - **Rate limiting** to prevent API overwhelm
 
-### 🔧 **Advanced Features**
+### Advanced Features
 - **🧠 Complex Natural Language Queries** with Boolean operators (AND, OR, NOT)
 - **🎯 Multi-Entity Cross-Search** (genes + diseases + phenotypes + alleles)
 - **🔍 Advanced Query Parsing** with automatic species/process/function detection
@@ -32,51 +32,51 @@ This JavaScript implementation offers significant improvements over the Python v
 - **📈 Real-time Query Analytics** and performance insights
 - **🏷️ Automatic Entity Classification** and metadata extraction
 
-### 🛡️ **Reliability & Security**
+### Reliability & Security
 - **Robust error boundaries** with detailed error reporting
 - **Input sanitization** to prevent injection attacks
 - **Request timeout handling** with configurable limits
 - **Process monitoring** with health check capabilities
 - **Memory leak prevention** with automated cache management
 
-### 📊 **Monitoring & Observability**
+### Monitoring & Observability
 - **Real-time performance metrics** 
 - **Cache hit/miss ratio tracking**
 - **API response time monitoring**
 - **Structured JSON logging**
 - **Health check endpoints**
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 Enhanced AGR MCP Server (JavaScript)
-├── 🔥 High-Performance HTTP Client (Axios)
+├── High-Performance HTTP Client (Axios)
 │   ├── Connection Pooling
 │   ├── Request/Response Interceptors
 │   └── Automatic Retry Logic
 │
-├── 🧠 Intelligent Caching Layer (NodeCache)
+├── Intelligent Caching Layer (NodeCache)
 │   ├── Configurable TTL per endpoint
 │   ├── Memory-efficient storage
 │   └── Automatic cleanup
 │
-├── 🛡️ Rate Limiting System
+├── Rate Limiting System
 │   ├── Per-endpoint rate tracking
 │   ├── Sliding window algorithm
 │   └── Automatic throttling
 │
-├── 📊 Enhanced Logging (Pino)
+├── Enhanced Logging (Pino)
 │   ├── Structured JSON output
 │   ├── Pretty console formatting
 │   └── Performance tracking
 │
-└── 🎯 Advanced Validation
+└── Advanced Validation
     ├── Gene ID format validation
     ├── Sequence validation
     └── Input sanitization
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+ 
@@ -117,9 +117,9 @@ npm run lint:fix
 npm run format
 ```
 
-## 📋 Available Tools (12 Advanced Tools)
+## Available Tools (12 Advanced Tools)
 
-### 🧬 **Core Genomics Tools**
+### Core Genomics Tools
 1. **`search_genes`** - Advanced gene search with natural language support
 2. **`get_gene_info`** - Comprehensive gene information
 3. **`get_gene_diseases`** - Disease associations and models
@@ -129,17 +129,17 @@ npm run format
 7. **`blast_sequence`** - BLAST search with auto-detection
 8. **`get_species_list`** - Supported model organisms
 
-### 🚀 **Advanced Query Tools**
+### Advanced Query Tools
 9. **`complex_search`** - Natural language cross-entity search with relationships
 10. **`faceted_search`** - Multi-filter advanced search with aggregations
 
-### 🔧 **Performance & Monitoring Tools**
+### Performance & Monitoring Tools
 11. **`get_cache_stats`** - Real-time performance metrics
 12. **`clear_cache`** - Cache management (dev/testing)
 
-## 💡 Usage Examples
+## Usage Examples
 
-### 🧠 Complex Natural Language Queries (NEW!)
+### Complex Natural Language Queries (NEW!)
 
 The Enhanced AGR MCP Server now supports advanced Boolean queries with natural language processing:
 
@@ -206,7 +206,7 @@ npm run query complex "BRCA1 in human"
 }
 ```
 
-### 🎯 Advanced Faceted Search
+### Advanced Faceted Search
 ```javascript
 // Multi-dimensional filtering
 {
@@ -222,9 +222,9 @@ npm run query complex "BRCA1 in human"
 }
 ```
 
-### 📊 Tested & Verified Query Examples
+### Tested & Verified Query Examples
 
-#### ✅ Natural Language Queries That Work
+#### Natural Language Queries That Work
 - `"breast cancer genes in human AND DNA repair NOT p53"` - 6,021 results
 - `"insulin OR glucose in mouse"` - 28 results  
 - `"BRCA1 in human"` - 29 results
@@ -239,7 +239,7 @@ npm run query complex "BRCA1 in human"
 - `"BRCA1 orthologs and cancer associations"` → Cross-species + disease links
 - `"DNA repair genes and associated phenotypes"` → Genes + phenotype relationships
 
-### 🔧 Basic Tool Usage
+### Basic Tool Usage
 
 #### Gene Information
 ```javascript
@@ -270,7 +270,7 @@ npm run query complex "BRCA1 in human"
 }
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 ```bash
@@ -293,7 +293,7 @@ The server automatically configures itself with optimal settings:
 - **Retry Logic**: 3 attempts with exponential backoff
 - **Connection Pooling**: Optimized for genomics API patterns
 
-## 🐳 Docker Support
+## Docker Support
 
 ```bash
 # Build Docker image
@@ -306,7 +306,7 @@ npm run docker:run
 docker-compose up -d
 ```
 
-## 📊 Performance Comparison
+## Performance Comparison
 
 | Metric | Python Version | **JavaScript Version** | Improvement |
 |--------|---------------|----------------------|-------------|
@@ -317,7 +317,7 @@ docker-compose up -d
 | Error Recovery | Basic | **Advanced** | Exponential backoff |
 | Input Validation | Limited | **Comprehensive** | Type safety |
 
-## 🧪 Testing & Quality
+## Testing & Quality
 
 ```bash
 # Run comprehensive tests
@@ -337,7 +337,7 @@ npm run validate
 npm run health-check
 ```
 
-## 🔍 Advanced Features
+## Advanced Features
 
 ### Intelligent Caching
 - **Per-endpoint TTL optimization**
@@ -363,7 +363,7 @@ npm run health-check
 - **Query sanitization**
 - **Parameter bounds checking**
 
-## 🌐 Claude Integration
+## Claude Integration
 
 ### Claude Desktop Configuration
 
@@ -409,7 +409,7 @@ Then configure Claude Desktop:
 
 Replace `<PROJECT_PATH>` with the absolute path to your cloned repository.
 
-### 🧠 Advanced Natural Language Queries
+### Advanced Natural Language Queries
 
 With the enhanced complex query system, Claude can now handle sophisticated genomic questions:
 
@@ -434,7 +434,7 @@ With the enhanced complex query system, Claude can now handle sophisticated geno
 - "Get expression data for TP53 across all tissues"
 - "Show me cache performance statistics"
 
-## 📈 Monitoring Dashboard
+## Monitoring Dashboard
 
 The server provides comprehensive monitoring:
 
@@ -456,7 +456,7 @@ The server provides comprehensive monitoring:
 }
 ```
 
-## 🚀 Production Deployment
+## Production Deployment
 
 ### PM2 Process Manager
 ```bash
@@ -482,33 +482,33 @@ npm run health-check
 node scripts/monitor.js
 ```
 
-## 🎯 Key Advantages Over Python
+## Key Advantages Over Python
 
-1. **⚡ Performance**: 25-40% faster response times
-2. **🧠 Smart Caching**: Intelligent TTL and automatic cleanup
-3. **🔒 Robust Validation**: Comprehensive input checking
-4. **📊 Monitoring**: Real-time performance metrics
-5. **🛡️ Error Handling**: Advanced retry and recovery logic
-6. **🔧 Configuration**: Flexible, environment-aware settings
-7. **📝 Documentation**: TypeScript-style JSDoc throughout
-8. **🐳 DevOps**: Docker, PM2, and monitoring ready
+1. **Performance**: 25-40% faster response times
+2. **Smart Caching**: Intelligent TTL and automatic cleanup
+3. **Robust Validation**: Comprehensive input checking
+4. **Monitoring**: Real-time performance metrics
+5. **Error Handling**: Advanced retry and recovery logic
+6. **Configuration**: Flexible, environment-aware settings
+7. **Documentation**: TypeScript-style JSDoc throughout
+8. **DevOps**: Docker, PM2, and monitoring ready
 
-## 📞 Support
+## Support
 
 - **Issues**: GitHub Issues
 - **Documentation**: JSDoc generated docs in `/docs`
 - **Health Check**: `npm run health-check`
 - **Performance**: `npm run benchmark`
 
-## 🏆 Status: Production Ready
+## Status: Production Ready
 
-✅ **Enhanced JavaScript Implementation Complete**
-- 🚀 High-performance architecture with caching
-- 🛡️ Robust error handling and validation  
-- 📊 Comprehensive monitoring and logging
-- 🔧 Advanced configuration management
-- 🧪 Full testing and quality assurance
-- 🐳 Production deployment ready
-- 📝 Complete documentation
+**Enhanced JavaScript Implementation Complete**
+- High-performance architecture with caching
+- Robust error handling and validation  
+- Comprehensive monitoring and logging
+- Advanced configuration management
+- Full testing and quality assurance
+- Production deployment ready
+- Complete documentation
 
-**Ready for immediate deployment as a faster, more reliable alternative to the Python version! 🎉**
+**Ready for immediate deployment as a faster, more reliable alternative to the Python version!**

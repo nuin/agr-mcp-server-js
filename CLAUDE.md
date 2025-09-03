@@ -208,7 +208,7 @@ After setup, restart Claude Code completely and verify with these queries:
 
 ## Real Usage Examples
 
-### 🧬 Gene Search Examples
+### Gene Search Examples
 
 **Basic gene search:**
 ```bash
@@ -229,7 +229,7 @@ npm run query genes TP53
 - tp53 (Danio rerio) - tumor protein p53 (ZFIN:ZDB-GENE-990415-270)  
 - Tp53 (Rattus norvegicus) - tumor protein p53 (RGD:3889)
 
-### 📋 Detailed Gene Information
+### Detailed Gene Information
 
 **Get comprehensive gene details:**
 ```bash
@@ -246,7 +246,7 @@ npm run query info HGNC:1100
 - **Cross-references:** ENSEMBL, NCBI, UniProt, etc.
 
 
-### 📊 Performance Monitoring
+### Performance Monitoring
 
 **Check cache performance:**
 ```bash
@@ -258,7 +258,7 @@ npm run query cache
 - Cache misses: Miss rate tracking
 - Server uptime: Runtime duration
 
-### 🎯 Natural Language Queries (Claude Code)
+### Natural Language Queries (Claude Code)
 
 Once installed in Claude Code, you can use natural language:
 
