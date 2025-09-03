@@ -3,9 +3,26 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Quick Setup
+
+### Option 1: npm Package (Recommended)
+```bash
+# Install globally from npm
+npm install -g agr-mcp-server-enhanced
+
+# Start the server
+agr-mcp-server
+
+# Or use the natural language server
+agr-mcp-natural
+
+# Or start interactive chat
+agr-chat
+```
+
+### Option 2: From Source
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/nuin/agr-mcp-server-js.git
 cd agr-mcp-server-js
 
 # Install dependencies and validate setup
@@ -126,17 +143,19 @@ This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in
 
 ## Claude Code Installation & Usage
 
-### Option 1: Permanent Installation (Recommended)
+### Option 1: npm Package Installation (Recommended)
 
-Install the AGR MCP server permanently as a global npm package:
+Install the AGR MCP server from npm:
 
 ```bash
-# Clone and install globally
-git clone https://github.com/your-username/agr-mcp-server-js.git
-cd agr-mcp-server-js
-npm install -g .
+# Install globally from npm
+npm install -g agr-mcp-server-enhanced
 
-# The server is now available globally as 'agr-mcp-server'
+# The server binaries are now available globally:
+# - agr-mcp-server (main MCP server)
+# - agr-mcp-natural (natural language MCP server)
+# - alliance (CLI interface)
+# - agr-chat (interactive chat)
 ```
 
 **Configure Claude Code** with global installation:

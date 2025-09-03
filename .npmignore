@@ -1,0 +1,72 @@
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+__tests__/
+coverage/
+.nyc_output/
+
+# Development files
+.env
+.env.*
+*.log
+logs/
+.eslintcache
+.vitest/
+
+# Build artifacts
+build/
+dist/
+temp/
+.tmp/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Development and CI
+.github/
+.travis.yml
+.circleci/
+docker-compose.yml
+Dockerfile.dev
+.dockerignore
+
+# Documentation source
+docs-src/
+*.md.bak
+
+# Benchmarks and examples
+benchmark/
+examples/
+performance/
+
+# Development scripts
+scripts/dev/
+scripts/test/
+scripts/benchmark/
+
+# Include important files
+!README.md
+!CHANGELOG.md
+!LICENSE
+!bin/
+!src/
+!config/
+!scripts/easy-query.js
+!scripts/health-check.js

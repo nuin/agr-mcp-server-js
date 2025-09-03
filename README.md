@@ -83,9 +83,26 @@ Enhanced AGR MCP Server (JavaScript)
 - npm 8+
 
 ### Installation
+
+#### Option 1: npm Package (Recommended)
+```bash
+# Install globally from npm
+npm install -g agr-mcp-server-enhanced
+
+# Start the server
+agr-mcp-server
+
+# Or use the natural language server
+agr-mcp-natural
+
+# Or start interactive chat
+agr-chat
+```
+
+#### Option 2: From Source
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/nuin/agr-mcp-server-js.git
 cd agr-mcp-server-js
 
 # Install dependencies and validate setup
