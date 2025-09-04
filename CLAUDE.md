@@ -77,6 +77,46 @@ npm start
 ## Architecture Overview
 This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in JavaScript/Node.js, designed as a high-performance alternative to the Python version. The server provides genomics data access through the Model Context Protocol (MCP).
 
+## Advanced Scientific Features (NEW! 🚀)
+
+The server now includes comprehensive scientific analysis modules providing cutting-edge genomics capabilities:
+
+### 🧬 Variant Analysis
+- **ClinVar Integration**: Clinical significance and pathogenicity assessment
+- **gnomAD Integration**: Population frequency analysis across diverse populations
+- **VEP Integration**: Functional impact prediction and consequence analysis
+- **ACMG Classification**: Automated variant classification using ACMG guidelines
+- **Multi-Assembly Support**: GRCh37 and GRCh38 genome builds
+
+### 💊 Drug-Gene Interactions
+- **DGIdb Integration**: Comprehensive drug-gene interaction database
+- **PharmGKB Integration**: Pharmacogenomics knowledge base
+- **Clinical Trials**: Integration with clinical trial drug data
+- **Drug Repurposing**: Identification of repurposing opportunities
+- **Interaction Classification**: Detailed interaction type categorization
+
+### 🧪 Protein Structure Analysis
+- **PDB Integration**: Experimental 3D structures from Protein Data Bank
+- **AlphaFold Integration**: AI-predicted structures with confidence scores
+- **Structure Quality Assessment**: Comprehensive quality metrics
+- **Variant-Structure Mapping**: 3D structural impact of genetic variants
+- **Domain Analysis**: Protein domain identification and characterization
+
+### 📊 Gene Expression Heatmaps
+- **GTEx Integration**: Tissue-specific expression from Genotype-Tissue Expression
+- **Human Protein Atlas**: Protein expression data across tissues
+- **Multi-Gene Analysis**: Comparative expression profiling
+- **Hierarchical Clustering**: Advanced clustering algorithms
+- **Visualization Ready**: Heatmap data optimized for visualization
+
+### 🎯 Functional Enrichment Analysis
+- **GO Enrichment**: Gene Ontology functional annotation
+- **KEGG Pathways**: Metabolic and signaling pathway analysis
+- **Reactome Integration**: Comprehensive pathway database
+- **GSEA Support**: Gene Set Enrichment Analysis
+- **Statistical Testing**: Hypergeometric and other statistical methods
+- **Multiple Testing Correction**: Bonferroni, FDR, and other corrections
+
 ### Core Components
 - **EnhancedAGRClient**: Main client class with caching, rate limiting, and error handling
 - **MCP Server**: Built on `@modelcontextprotocol/sdk` for protocol compliance
@@ -97,7 +137,9 @@ This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in
 - `scripts/`: Utility scripts for health checks, benchmarking, and demos
 - `config/claude-desktop-config.json`: Claude Desktop MCP configuration
 
-### Available MCP Tools (12 total)
+### Available MCP Tools (24 total)
+
+#### Core Genomics Tools
 1. `search_genes` - Gene search with species filtering
 2. `get_gene_info` - Detailed gene information
 3. `get_gene_diseases` - Disease associations
@@ -105,11 +147,35 @@ This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in
 5. `get_gene_expression` - Expression data across tissues
 6. `find_orthologs` - Cross-species orthology analysis
 7. `blast_sequence` - BLAST search with auto-detection
+
+#### Advanced Query Tools
 8. `complex_search` - Natural language queries with Boolean operators (AND, OR, NOT)
 9. `faceted_search` - Multi-dimensional filtering with aggregations
-10. `get_species_list` - Supported model organisms
-11. `get_cache_stats` - Performance monitoring
-12. `clear_cache` - Cache management
+
+#### Scientific Analysis Tools (NEW!)
+10. `analyze_variant` - **Comprehensive variant analysis with ClinVar, gnomAD, and VEP integration**
+11. `get_drug_interactions` - **Drug-gene interactions using DGIdb and PharmGKB databases**
+12. `get_protein_structure` - **Protein structure information from PDB and AlphaFold**
+13. `get_expression_heatmap` - **Gene expression heatmap data across tissues and cell types**
+14. `functional_enrichment_analysis` - **Comprehensive functional enrichment analysis with GO, KEGG, and GSEA**
+
+#### Literature Mining Tools
+15. `search_literature` - PubMed literature search for gene-related papers
+16. `find_gene_relationships` - Literature-based gene relationship discovery
+17. `analyze_research_trends` - Publication trend analysis over time
+
+#### Evolutionary Analysis Tools
+18. `build_phylogenetic_tree` - Phylogenetic tree construction for gene families
+19. `get_conservation_score` - Evolutionary conservation analysis
+
+#### Pathway Analysis Tools
+20. `get_gene_pathways` - KEGG, Reactome, and GO pathway information
+21. `pathway_enrichment` - Pathway enrichment analysis
+
+#### System Tools
+22. `get_species_list` - Supported model organisms
+23. `get_cache_stats` - Performance monitoring
+24. `clear_cache` - Cache management
 
 ### API Endpoints Used
 - Main API: `https://www.alliancegenome.org/api`
