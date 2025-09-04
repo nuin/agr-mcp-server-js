@@ -32,6 +32,11 @@ import pino from 'pino';
 import { LiteratureMiningClient } from './scientific/literature-mining.js';
 import { PhylogeneticAnalysisClient } from './scientific/phylogenetic-analysis.js';
 import { PathwayAnalysisClient } from './scientific/pathway-analysis.js';
+import { VariantAnalysisClient } from './scientific/variant-analysis.js';
+import { DrugGeneInteractionsClient } from './scientific/drug-gene-interactions.js';
+import { ProteinStructureClient } from './scientific/protein-structure.js';
+import { GeneExpressionClient } from './scientific/gene-expression.js';
+import { FunctionalEnrichmentClient } from './scientific/functional-enrichment.js';
 
 // Enhanced configuration
 const CONFIG = {
@@ -986,6 +991,28 @@ const pathwayClient = new PathwayAnalysisClient({
   timeout: CONFIG.timeout
 });
 
+const variantClient = new VariantAnalysisClient({
+  timeout: CONFIG.timeout,
+  email: 'agr-mcp-server@example.com',
+  tool: 'AGR-MCP-Server'
+});
+
+const drugClient = new DrugGeneInteractionsClient({
+  timeout: CONFIG.timeout
+});
+
+const proteinClient = new ProteinStructureClient({
+  timeout: CONFIG.timeout
+});
+
+const expressionClient = new GeneExpressionClient({
+  timeout: CONFIG.timeout
+});
+
+const enrichmentClient = new FunctionalEnrichmentClient({
+  timeout: CONFIG.timeout
+});
+
 // Create the MCP server
 const server = new Server(
   {
@@ -1437,6 +1464,197 @@ const TOOLS = [
       },
       required: ['gene_list']
     }
+  },
+  {
+    name: 'analyze_variant',
+    description: 'Comprehensive variant analysis with ClinVar, gnomAD, and VEP integration',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        variant: {
+          type: 'string',
+          description: 'Variant identifier (rs ID, HGVS notation, or chr:pos:ref:alt)'
+        },
+        include_clinical: {
+          type: 'boolean',
+          description: 'Include clinical significance from ClinVar',
+          default: true
+        },
+        include_population: {
+          type: 'boolean',
+          description: 'Include population frequency from gnomAD',
+          default: true
+        },
+        include_functional: {
+          type: 'boolean',
+          description: 'Include functional predictions from VEP',
+          default: true
+        },
+        assembly: {
+          type: 'string',
+          description: 'Genome assembly version',
+          enum: ['GRCh37', 'GRCh38'],
+          default: 'GRCh38'
+        }
+      },
+      required: ['variant']
+    }
+  },
+  {
+    name: 'get_drug_interactions',
+    description: 'Find drug-gene interactions using DGIdb and PharmGKB databases',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Gene symbol to search for drug interactions'
+        },
+        interaction_types: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Types of interactions to include',
+          default: ['inhibitor', 'activator', 'antagonist', 'agonist']
+        },
+        source_databases: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Source databases to query',
+          default: ['dgidb', 'pharmgkb']
+        },
+        include_clinical_trials: {
+          type: 'boolean',
+          description: 'Include clinical trial information',
+          default: true
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'get_protein_structure',
+    description: 'Retrieve protein structure information from PDB and AlphaFold',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        identifier: {
+          type: 'string',
+          description: 'Protein identifier (gene symbol, UniProt ID, or PDB ID)'
+        },
+        structure_source: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['pdb', 'alphafold']
+          },
+          description: 'Structure databases to query',
+          default: ['pdb', 'alphafold']
+        },
+        include_variants: {
+          type: 'boolean',
+          description: 'Include structure-variant mapping',
+          default: false
+        },
+        quality_threshold: {
+          type: 'number',
+          description: 'Minimum confidence score for AlphaFold structures',
+          minimum: 0,
+          maximum: 100,
+          default: 70
+        }
+      },
+      required: ['identifier']
+    }
+  },
+  {
+    name: 'get_expression_heatmap',
+    description: 'Generate gene expression heatmap data across tissues and cell types',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        genes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of gene symbols to analyze'
+        },
+        data_sources: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['gtex', 'hpa']
+          },
+          description: 'Expression data sources',
+          default: ['gtex', 'hpa']
+        },
+        tissue_filter: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Specific tissues to include (optional)'
+        },
+        normalization: {
+          type: 'string',
+          enum: ['tpm', 'fpkm', 'log2', 'zscore'],
+          description: 'Expression normalization method',
+          default: 'tpm'
+        },
+        clustering: {
+          type: 'boolean',
+          description: 'Perform hierarchical clustering',
+          default: true
+        }
+      },
+      required: ['genes']
+    }
+  },
+  {
+    name: 'functional_enrichment_analysis',
+    description: 'Comprehensive functional enrichment analysis with GO, KEGG, and GSEA',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_list: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of gene symbols for enrichment analysis'
+        },
+        databases: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['go', 'kegg', 'reactome', 'hallmark']
+          },
+          description: 'Pathway databases to query',
+          default: ['go', 'kegg', 'reactome']
+        },
+        species: {
+          type: 'string',
+          description: 'Species for analysis',
+          default: 'Homo sapiens'
+        },
+        p_value_threshold: {
+          type: 'number',
+          description: 'P-value significance threshold',
+          default: 0.05
+        },
+        correction_method: {
+          type: 'string',
+          enum: ['bonferroni', 'fdr', 'none'],
+          description: 'Multiple testing correction method',
+          default: 'fdr'
+        },
+        min_overlap: {
+          type: 'integer',
+          description: 'Minimum gene overlap for pathway inclusion',
+          default: 2
+        },
+        include_gsea: {
+          type: 'boolean',
+          description: 'Include GSEA analysis if ranked gene list provided',
+          default: false
+        }
+      },
+      required: ['gene_list']
+    }
   }
 ];
 
@@ -1593,6 +1811,51 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           pValueThreshold: args.p_value_threshold,
           databases: args.databases,
           correctionMethod: args.correction_method
+        });
+        break;
+
+      case 'analyze_variant':
+        result = await variantClient.analyzeVariant(args.variant, {
+          includeClinical: args.include_clinical,
+          includePopulation: args.include_population,
+          includeFunctional: args.include_functional,
+          assembly: args.assembly
+        });
+        break;
+
+      case 'get_drug_interactions':
+        result = await drugClient.getDrugInteractions(args.gene_symbol, {
+          interactionTypes: args.interaction_types,
+          sourceDatabases: args.source_databases,
+          includeClinicalTrials: args.include_clinical_trials
+        });
+        break;
+
+      case 'get_protein_structure':
+        result = await proteinClient.getProteinStructure(args.identifier, {
+          structureSource: args.structure_source,
+          includeVariants: args.include_variants,
+          qualityThreshold: args.quality_threshold
+        });
+        break;
+
+      case 'get_expression_heatmap':
+        result = await expressionClient.getExpressionHeatmap(args.genes, {
+          dataSources: args.data_sources,
+          tissueFilter: args.tissue_filter,
+          normalization: args.normalization,
+          clustering: args.clustering
+        });
+        break;
+
+      case 'functional_enrichment_analysis':
+        result = await enrichmentClient.performEnrichmentAnalysis(args.gene_list, {
+          databases: args.databases,
+          species: args.species,
+          pValueThreshold: args.p_value_threshold,
+          correctionMethod: args.correction_method,
+          minOverlap: args.min_overlap,
+          includeGsea: args.include_gsea
         });
         break;
 
