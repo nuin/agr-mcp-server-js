@@ -30,6 +30,8 @@ import axios from 'axios';
 import NodeCache from 'node-cache';
 import pino from 'pino';
 import { LiteratureMiningClient } from './scientific/literature-mining.js';
+import { PhylogeneticAnalysisClient } from './scientific/phylogenetic-analysis.js';
+import { PathwayAnalysisClient } from './scientific/pathway-analysis.js';
 
 // Enhanced configuration
 const CONFIG = {
@@ -975,6 +977,15 @@ const literatureMiningClient = new LiteratureMiningClient({
   retmax: 100
 });
 
+const phylogeneticClient = new PhylogeneticAnalysisClient({
+  apiBase: CONFIG.endpoints.base,
+  timeout: CONFIG.timeout
+});
+
+const pathwayClient = new PathwayAnalysisClient({
+  timeout: CONFIG.timeout
+});
+
 // Create the MCP server
 const server = new Server(
   {
@@ -1291,6 +1302,141 @@ const TOOLS = [
       },
       required: ['gene_symbol']
     }
+  },
+  {
+    name: 'build_phylogenetic_tree',
+    description: 'Build phylogenetic tree for a gene family across species',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_id: {
+          type: 'string',
+          description: 'Gene identifier (e.g., HGNC:1100)'
+        },
+        species: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Species to include (default: all)',
+          default: ['all']
+        },
+        tree_method: {
+          type: 'string',
+          enum: ['neighbor_joining', 'upgma'],
+          description: 'Tree construction method',
+          default: 'neighbor_joining'
+        },
+        include_paralogs: {
+          type: 'boolean',
+          description: 'Include paralogs in tree',
+          default: false
+        }
+      },
+      required: ['gene_id']
+    }
+  },
+  {
+    name: 'get_conservation_score',
+    description: 'Calculate evolutionary conservation score for a gene',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_id: {
+          type: 'string',
+          description: 'Gene identifier'
+        },
+        species: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Species to compare',
+          default: ['Homo sapiens', 'Mus musculus', 'Danio rerio']
+        },
+        metric: {
+          type: 'string',
+          enum: ['identity', 'similarity'],
+          description: 'Conservation metric',
+          default: 'identity'
+        }
+      },
+      required: ['gene_id']
+    }
+  },
+  {
+    name: 'get_gene_pathways',
+    description: 'Get pathway information for a gene from KEGG, Reactome, and GO',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Gene symbol (e.g., BRCA1, TP53)'
+        },
+        species: {
+          type: 'string',
+          description: 'Species name',
+          default: 'Homo sapiens'
+        },
+        databases: {
+          type: 'array',
+          items: { 
+            type: 'string',
+            enum: ['kegg', 'reactome', 'go']
+          },
+          description: 'Pathway databases to query',
+          default: ['kegg', 'reactome', 'go']
+        },
+        include_interactions: {
+          type: 'boolean',
+          description: 'Include pathway interactions',
+          default: false
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'pathway_enrichment',
+    description: 'Perform pathway enrichment analysis on a gene list',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_list: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of gene symbols to analyze'
+        },
+        species: {
+          type: 'string',
+          description: 'Species name',
+          default: 'Homo sapiens'
+        },
+        background: {
+          type: 'string',
+          description: 'Background gene set (genome or custom size)',
+          default: 'genome'
+        },
+        p_value_threshold: {
+          type: 'number',
+          description: 'P-value significance threshold',
+          default: 0.05
+        },
+        databases: {
+          type: 'array',
+          items: { 
+            type: 'string',
+            enum: ['kegg', 'reactome', 'go']
+          },
+          description: 'Databases for enrichment',
+          default: ['kegg', 'go']
+        },
+        correction_method: {
+          type: 'string',
+          enum: ['bonferroni', 'fdr', 'none'],
+          description: 'Multiple testing correction method',
+          default: 'bonferroni'
+        }
+      },
+      required: ['gene_list']
+    }
   }
 ];
 
@@ -1414,6 +1560,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await literatureMiningClient.analyzeResearchTrends(args.gene_symbol, {
           startYear: args.start_year,
           endYear: args.end_year
+        });
+        break;
+
+      case 'build_phylogenetic_tree':
+        result = await phylogeneticClient.buildPhylogeneticTree(args.gene_id, {
+          species: args.species,
+          treeMethod: args.tree_method,
+          includeParalogs: args.include_paralogs
+        });
+        break;
+
+      case 'get_conservation_score':
+        result = await phylogeneticClient.getConservationScore(args.gene_id, {
+          species: args.species,
+          metric: args.metric
+        });
+        break;
+
+      case 'get_gene_pathways':
+        result = await pathwayClient.getGenePathways(args.gene_symbol, {
+          species: args.species,
+          databases: args.databases,
+          includeInteractions: args.include_interactions
+        });
+        break;
+
+      case 'pathway_enrichment':
+        result = await pathwayClient.pathwayEnrichment(args.gene_list, {
+          species: args.species,
+          background: args.background,
+          pValueThreshold: args.p_value_threshold,
+          databases: args.databases,
+          correctionMethod: args.correction_method
         });
         break;
 
