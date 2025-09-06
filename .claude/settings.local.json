@@ -10,7 +10,8 @@
       "Bash(timeout:*)",
       "Bash(npm run:*)",
       "Bash(alliance \"BRCA1 genes in human\")",
-      "mcp__agr-genomics__complex_search"
+      "mcp__agr-genomics__complex_search",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   },

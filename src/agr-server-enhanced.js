@@ -29,6 +29,14 @@ import {
 import axios from 'axios';
 import NodeCache from 'node-cache';
 import pino from 'pino';
+import { LiteratureMiningClient } from './scientific/literature-mining.js';
+import { PhylogeneticAnalysisClient } from './scientific/phylogenetic-analysis.js';
+import { PathwayAnalysisClient } from './scientific/pathway-analysis.js';
+import { VariantAnalysisClient } from './scientific/variant-analysis.js';
+import { DrugGeneInteractionsClient } from './scientific/drug-gene-interactions.js';
+import { ProteinStructureClient } from './scientific/protein-structure.js';
+import { GeneExpressionClient } from './scientific/gene-expression.js';
+import { FunctionalEnrichmentClient } from './scientific/functional-enrichment.js';
 
 // Enhanced configuration
 const CONFIG = {
@@ -967,6 +975,44 @@ class EnhancedAGRClient {
 // Initialize the enhanced AGR client
 const agrClient = new EnhancedAGRClient();
 
+// Initialize scientific modules
+const literatureMiningClient = new LiteratureMiningClient({
+  email: 'agr-mcp-server@example.com',
+  tool: 'AGR-MCP-Server',
+  retmax: 100
+});
+
+const phylogeneticClient = new PhylogeneticAnalysisClient({
+  apiBase: CONFIG.endpoints.base,
+  timeout: CONFIG.timeout
+});
+
+const pathwayClient = new PathwayAnalysisClient({
+  timeout: CONFIG.timeout
+});
+
+const variantClient = new VariantAnalysisClient({
+  timeout: CONFIG.timeout,
+  email: 'agr-mcp-server@example.com',
+  tool: 'AGR-MCP-Server'
+});
+
+const drugClient = new DrugGeneInteractionsClient({
+  timeout: CONFIG.timeout
+});
+
+const proteinClient = new ProteinStructureClient({
+  timeout: CONFIG.timeout
+});
+
+const expressionClient = new GeneExpressionClient({
+  timeout: CONFIG.timeout
+});
+
+const enrichmentClient = new FunctionalEnrichmentClient({
+  timeout: CONFIG.timeout
+});
+
 // Create the MCP server
 const server = new Server(
   {
@@ -1198,6 +1244,417 @@ const TOOLS = [
       },
       required: []
     }
+  },
+  {
+    name: 'search_literature',
+    description: 'Search PubMed for gene-related scientific literature',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Gene symbol to search for (e.g., BRCA1, TP53)'
+        },
+        keywords: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Additional keywords to include in search'
+        },
+        date_range: {
+          type: 'object',
+          properties: {
+            start_year: { type: 'integer' },
+            end_year: { type: 'integer' }
+          },
+          description: 'Publication date range filter'
+        },
+        max_results: {
+          type: 'integer',
+          description: 'Maximum number of papers to return (default: 50)',
+          default: 50
+        },
+        sort_by: {
+          type: 'string',
+          enum: ['relevance', 'date'],
+          description: 'Sort results by relevance or publication date',
+          default: 'relevance'
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'find_gene_relationships',
+    description: 'Find gene relationships from literature co-mentions',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Primary gene symbol to analyze'
+        },
+        max_genes: {
+          type: 'integer',
+          description: 'Maximum related genes to return (default: 20)',
+          default: 20
+        },
+        min_co_occurrence: {
+          type: 'integer',
+          description: 'Minimum co-occurrence threshold (default: 2)',
+          default: 2
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'analyze_research_trends',
+    description: 'Track research publication trends for a gene over time',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Gene symbol to analyze trends for'
+        },
+        start_year: {
+          type: 'integer',
+          description: 'Start year for trend analysis (default: 2000)',
+          default: 2000
+        },
+        end_year: {
+          type: 'integer',
+          description: 'End year for trend analysis (default: current year)'
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'build_phylogenetic_tree',
+    description: 'Build phylogenetic tree for a gene family across species',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_id: {
+          type: 'string',
+          description: 'Gene identifier (e.g., HGNC:1100)'
+        },
+        species: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Species to include (default: all)',
+          default: ['all']
+        },
+        tree_method: {
+          type: 'string',
+          enum: ['neighbor_joining', 'upgma'],
+          description: 'Tree construction method',
+          default: 'neighbor_joining'
+        },
+        include_paralogs: {
+          type: 'boolean',
+          description: 'Include paralogs in tree',
+          default: false
+        }
+      },
+      required: ['gene_id']
+    }
+  },
+  {
+    name: 'get_conservation_score',
+    description: 'Calculate evolutionary conservation score for a gene',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_id: {
+          type: 'string',
+          description: 'Gene identifier'
+        },
+        species: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Species to compare',
+          default: ['Homo sapiens', 'Mus musculus', 'Danio rerio']
+        },
+        metric: {
+          type: 'string',
+          enum: ['identity', 'similarity'],
+          description: 'Conservation metric',
+          default: 'identity'
+        }
+      },
+      required: ['gene_id']
+    }
+  },
+  {
+    name: 'get_gene_pathways',
+    description: 'Get pathway information for a gene from KEGG, Reactome, and GO',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Gene symbol (e.g., BRCA1, TP53)'
+        },
+        species: {
+          type: 'string',
+          description: 'Species name',
+          default: 'Homo sapiens'
+        },
+        databases: {
+          type: 'array',
+          items: { 
+            type: 'string',
+            enum: ['kegg', 'reactome', 'go']
+          },
+          description: 'Pathway databases to query',
+          default: ['kegg', 'reactome', 'go']
+        },
+        include_interactions: {
+          type: 'boolean',
+          description: 'Include pathway interactions',
+          default: false
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'pathway_enrichment',
+    description: 'Perform pathway enrichment analysis on a gene list',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_list: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of gene symbols to analyze'
+        },
+        species: {
+          type: 'string',
+          description: 'Species name',
+          default: 'Homo sapiens'
+        },
+        background: {
+          type: 'string',
+          description: 'Background gene set (genome or custom size)',
+          default: 'genome'
+        },
+        p_value_threshold: {
+          type: 'number',
+          description: 'P-value significance threshold',
+          default: 0.05
+        },
+        databases: {
+          type: 'array',
+          items: { 
+            type: 'string',
+            enum: ['kegg', 'reactome', 'go']
+          },
+          description: 'Databases for enrichment',
+          default: ['kegg', 'go']
+        },
+        correction_method: {
+          type: 'string',
+          enum: ['bonferroni', 'fdr', 'none'],
+          description: 'Multiple testing correction method',
+          default: 'bonferroni'
+        }
+      },
+      required: ['gene_list']
+    }
+  },
+  {
+    name: 'analyze_variant',
+    description: 'Comprehensive variant analysis with ClinVar, gnomAD, and VEP integration',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        variant: {
+          type: 'string',
+          description: 'Variant identifier (rs ID, HGVS notation, or chr:pos:ref:alt)'
+        },
+        include_clinical: {
+          type: 'boolean',
+          description: 'Include clinical significance from ClinVar',
+          default: true
+        },
+        include_population: {
+          type: 'boolean',
+          description: 'Include population frequency from gnomAD',
+          default: true
+        },
+        include_functional: {
+          type: 'boolean',
+          description: 'Include functional predictions from VEP',
+          default: true
+        },
+        assembly: {
+          type: 'string',
+          description: 'Genome assembly version',
+          enum: ['GRCh37', 'GRCh38'],
+          default: 'GRCh38'
+        }
+      },
+      required: ['variant']
+    }
+  },
+  {
+    name: 'get_drug_interactions',
+    description: 'Find drug-gene interactions using DGIdb and PharmGKB databases',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_symbol: {
+          type: 'string',
+          description: 'Gene symbol to search for drug interactions'
+        },
+        interaction_types: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Types of interactions to include',
+          default: ['inhibitor', 'activator', 'antagonist', 'agonist']
+        },
+        source_databases: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Source databases to query',
+          default: ['dgidb', 'pharmgkb']
+        },
+        include_clinical_trials: {
+          type: 'boolean',
+          description: 'Include clinical trial information',
+          default: true
+        }
+      },
+      required: ['gene_symbol']
+    }
+  },
+  {
+    name: 'get_protein_structure',
+    description: 'Retrieve protein structure information from PDB and AlphaFold',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        identifier: {
+          type: 'string',
+          description: 'Protein identifier (gene symbol, UniProt ID, or PDB ID)'
+        },
+        structure_source: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['pdb', 'alphafold']
+          },
+          description: 'Structure databases to query',
+          default: ['pdb', 'alphafold']
+        },
+        include_variants: {
+          type: 'boolean',
+          description: 'Include structure-variant mapping',
+          default: false
+        },
+        quality_threshold: {
+          type: 'number',
+          description: 'Minimum confidence score for AlphaFold structures',
+          minimum: 0,
+          maximum: 100,
+          default: 70
+        }
+      },
+      required: ['identifier']
+    }
+  },
+  {
+    name: 'get_expression_heatmap',
+    description: 'Generate gene expression heatmap data across tissues and cell types',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        genes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of gene symbols to analyze'
+        },
+        data_sources: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['gtex', 'hpa']
+          },
+          description: 'Expression data sources',
+          default: ['gtex', 'hpa']
+        },
+        tissue_filter: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Specific tissues to include (optional)'
+        },
+        normalization: {
+          type: 'string',
+          enum: ['tpm', 'fpkm', 'log2', 'zscore'],
+          description: 'Expression normalization method',
+          default: 'tpm'
+        },
+        clustering: {
+          type: 'boolean',
+          description: 'Perform hierarchical clustering',
+          default: true
+        }
+      },
+      required: ['genes']
+    }
+  },
+  {
+    name: 'functional_enrichment_analysis',
+    description: 'Comprehensive functional enrichment analysis with GO, KEGG, and GSEA',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        gene_list: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of gene symbols for enrichment analysis'
+        },
+        databases: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['go', 'kegg', 'reactome', 'hallmark']
+          },
+          description: 'Pathway databases to query',
+          default: ['go', 'kegg', 'reactome']
+        },
+        species: {
+          type: 'string',
+          description: 'Species for analysis',
+          default: 'Homo sapiens'
+        },
+        p_value_threshold: {
+          type: 'number',
+          description: 'P-value significance threshold',
+          default: 0.05
+        },
+        correction_method: {
+          type: 'string',
+          enum: ['bonferroni', 'fdr', 'none'],
+          description: 'Multiple testing correction method',
+          default: 'fdr'
+        },
+        min_overlap: {
+          type: 'integer',
+          description: 'Minimum gene overlap for pathway inclusion',
+          default: 2
+        },
+        include_gsea: {
+          type: 'boolean',
+          description: 'Include GSEA analysis if ranked gene list provided',
+          default: false
+        }
+      },
+      required: ['gene_list']
+    }
   }
 ];
 
@@ -1296,6 +1753,110 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'clear_cache':
         agrClient.clearCache(args.pattern);
         result = { message: 'Cache cleared successfully' };
+        break;
+
+      case 'search_literature':
+        result = await literatureMiningClient.searchLiterature(args.gene_symbol, {
+          keywords: args.keywords,
+          dateRange: args.date_range ? {
+            startYear: args.date_range.start_year,
+            endYear: args.date_range.end_year
+          } : null,
+          maxResults: args.max_results,
+          sortBy: args.sort_by
+        });
+        break;
+
+      case 'find_gene_relationships':
+        result = await literatureMiningClient.findGeneRelationships(args.gene_symbol, {
+          maxGenes: args.max_genes,
+          minCoOccurrence: args.min_co_occurrence
+        });
+        break;
+
+      case 'analyze_research_trends':
+        result = await literatureMiningClient.analyzeResearchTrends(args.gene_symbol, {
+          startYear: args.start_year,
+          endYear: args.end_year
+        });
+        break;
+
+      case 'build_phylogenetic_tree':
+        result = await phylogeneticClient.buildPhylogeneticTree(args.gene_id, {
+          species: args.species,
+          treeMethod: args.tree_method,
+          includeParalogs: args.include_paralogs
+        });
+        break;
+
+      case 'get_conservation_score':
+        result = await phylogeneticClient.getConservationScore(args.gene_id, {
+          species: args.species,
+          metric: args.metric
+        });
+        break;
+
+      case 'get_gene_pathways':
+        result = await pathwayClient.getGenePathways(args.gene_symbol, {
+          species: args.species,
+          databases: args.databases,
+          includeInteractions: args.include_interactions
+        });
+        break;
+
+      case 'pathway_enrichment':
+        result = await pathwayClient.pathwayEnrichment(args.gene_list, {
+          species: args.species,
+          background: args.background,
+          pValueThreshold: args.p_value_threshold,
+          databases: args.databases,
+          correctionMethod: args.correction_method
+        });
+        break;
+
+      case 'analyze_variant':
+        result = await variantClient.analyzeVariant(args.variant, {
+          includeClinical: args.include_clinical,
+          includePopulation: args.include_population,
+          includeFunctional: args.include_functional,
+          assembly: args.assembly
+        });
+        break;
+
+      case 'get_drug_interactions':
+        result = await drugClient.getDrugInteractions(args.gene_symbol, {
+          interactionTypes: args.interaction_types,
+          sourceDatabases: args.source_databases,
+          includeClinicalTrials: args.include_clinical_trials
+        });
+        break;
+
+      case 'get_protein_structure':
+        result = await proteinClient.getProteinStructure(args.identifier, {
+          structureSource: args.structure_source,
+          includeVariants: args.include_variants,
+          qualityThreshold: args.quality_threshold
+        });
+        break;
+
+      case 'get_expression_heatmap':
+        result = await expressionClient.getExpressionHeatmap(args.genes, {
+          dataSources: args.data_sources,
+          tissueFilter: args.tissue_filter,
+          normalization: args.normalization,
+          clustering: args.clustering
+        });
+        break;
+
+      case 'functional_enrichment_analysis':
+        result = await enrichmentClient.performEnrichmentAnalysis(args.gene_list, {
+          databases: args.databases,
+          species: args.species,
+          pValueThreshold: args.p_value_threshold,
+          correctionMethod: args.correction_method,
+          minOverlap: args.min_overlap,
+          includeGsea: args.include_gsea
+        });
         break;
 
       default:

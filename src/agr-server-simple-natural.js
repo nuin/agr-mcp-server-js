@@ -13,6 +13,7 @@ import {
   ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import axios from 'axios';
+import { LiteratureMiningClient } from './scientific/literature-mining.js';
 
 const API_BASE = 'https://www.alliancegenome.org/api';
 const TIMEOUT = 30000;
@@ -57,6 +58,21 @@ class SimpleAGRClient {
     
     if (lower.includes('expression') || lower.includes('tissue') || lower.includes('where')) {
       return { intent: 'expression', gene: possibleGene, query };
+    }
+    
+    if (lower.includes('literature') || lower.includes('papers') || lower.includes('publications') || 
+        lower.includes('research') || lower.includes('pubmed') || lower.includes('articles')) {
+      return { intent: 'literature', gene: possibleGene, query };
+    }
+    
+    if (lower.includes('relationships') || lower.includes('interactions') || lower.includes('related genes') ||
+        lower.includes('co-occurrence') || lower.includes('partners')) {
+      return { intent: 'gene_relationships', gene: possibleGene, query };
+    }
+    
+    if (lower.includes('trends') || lower.includes('over time') || lower.includes('publications by year') ||
+        lower.includes('research trends')) {
+      return { intent: 'research_trends', gene: possibleGene, query };
     }
     
     if (lower.includes('detail') || lower.includes('info') || lower.includes('about') || possibleGene) {
@@ -139,6 +155,62 @@ class SimpleAGRClient {
           
         case 'complex_search':
           return await this.complexSearch(query);
+
+        case 'literature':
+          if (gene) {
+            const litResult = await literatureMiningClient.searchLiterature(gene, {
+              maxResults: 10,
+              sortBy: 'relevance'
+            });
+            return {
+              type: 'literature',
+              gene: gene,
+              papers: litResult.papers.map(p => ({
+                title: p.title,
+                authors: p.authors,
+                journal: p.journal,
+                date: p.date,
+                url: p.url,
+                relevanceScore: p.relevanceScore
+              })),
+              total: litResult.total,
+              summary: `Found ${litResult.returned} recent papers about ${gene} from ${litResult.total} total publications`
+            };
+          }
+          break;
+
+        case 'gene_relationships':
+          if (gene) {
+            const relResult = await literatureMiningClient.findGeneRelationships(gene, {
+              maxGenes: 10,
+              minCoOccurrence: 2
+            });
+            return {
+              type: 'gene_relationships',
+              primaryGene: gene,
+              relatedGenes: relResult.relatedGenes,
+              totalPapers: relResult.totalPapers,
+              summary: `Found ${relResult.relatedGenes.length} genes frequently mentioned with ${gene} in scientific literature`
+            };
+          }
+          break;
+
+        case 'research_trends':
+          if (gene) {
+            const trendsResult = await literatureMiningClient.analyzeResearchTrends(gene, {
+              startYear: 2020,
+              endYear: new Date().getFullYear()
+            });
+            return {
+              type: 'research_trends',
+              gene: gene,
+              totalPublications: trendsResult.totalPublications,
+              trendDirection: trendsResult.trendDirection,
+              yearlyData: trendsResult.yearlyData,
+              summary: `${gene} has ${trendsResult.totalPublications} publications with ${trendsResult.trendDirection} trend in recent years`
+            };
+          }
+          break;
           
         case 'search':
         default:
@@ -289,6 +361,13 @@ class SimpleAGRClient {
 
 // Initialize
 const agrClient = new SimpleAGRClient();
+
+// Initialize scientific modules for simple interface
+const literatureMiningClient = new LiteratureMiningClient({
+  email: 'agr-mcp-simple@example.com',
+  tool: 'AGR-MCP-Simple',
+  retmax: 50  // Smaller limit for simple interface
+});
 
 // Create MCP server
 const server = new Server(
