@@ -147,22 +147,38 @@ export class FunctionalEnrichmentClient {
   }
 
   /**
+   * Map short database names to full names
+   */
+  mapDatabaseName(database) {
+    const mapping = {
+      'go': 'GO_Biological_Process',
+      'kegg': 'KEGG_2021_Human',
+      'reactome': 'Reactome_2022',
+      'hallmark': 'MSigDB_Hallmark_2020'
+    };
+    return mapping[database.toLowerCase()] || database;
+  }
+
+  /**
    * Run enrichment analysis for a single database
    */
   async runSingleEnrichment(geneList, database, options) {
     try {
+      // Map short names to full database names
+      const fullDbName = this.mapDatabaseName(database);
+
       // Use Enrichr API for most databases
-      if (database.startsWith('GO_') || database.includes('KEGG')
-          || database.includes('Reactome') || database.includes('MSigDB')) {
-        return await this.runEnrichrAnalysis(geneList, database, options);
+      if (fullDbName.startsWith('GO_') || fullDbName.includes('KEGG')
+          || fullDbName.includes('Reactome') || fullDbName.includes('MSigDB')) {
+        return await this.runEnrichrAnalysis(geneList, fullDbName, options);
       }
 
       // Custom implementation for specific databases
-      if (database.startsWith('GO_')) {
-        return await this.runGOEnrichment(geneList, database, options);
+      if (fullDbName.startsWith('GO_')) {
+        return await this.runGOEnrichment(geneList, fullDbName, options);
       }
 
-      throw new Error(`Unsupported database: ${database}`);
+      throw new Error(`Unsupported database: ${fullDbName} (from ${database})`);
 
     } catch (error) {
       console.error(`Single enrichment error for ${database}:`, error.message);

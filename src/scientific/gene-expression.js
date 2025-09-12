@@ -207,7 +207,7 @@ export class GeneExpressionClient {
           }
         );
 
-        if (response.data) {
+        if (response.data && Array.isArray(response.data)) {
           expressionData[gene] = {};
           response.data.forEach(entry => {
             if (entry.Gene === gene) {
