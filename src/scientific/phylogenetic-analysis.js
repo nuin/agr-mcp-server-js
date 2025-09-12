@@ -1,6 +1,6 @@
 /**
  * Phylogenetic Analysis Module
- * 
+ *
  * Provides phylogenetic tree construction and analysis for gene families
  * across multiple species using AGR orthology data.
  */
@@ -20,14 +20,14 @@ export class PhylogeneticAnalysisClient {
     this.apiBase = options.apiBase || AGR_API_BASE;
     this.timeout = options.timeout || 30000;
     this.cache = new NodeCache({ stdTTL: CACHE_TTL });
-    
+
     // Create axios instance
     this.client = axios.create({
       baseURL: this.apiBase,
       timeout: this.timeout,
       headers: {
         'User-Agent': 'AGR-Phylogenetic-Analysis/1.0',
-        'Accept': 'application/json'
+        Accept: 'application/json'
       }
     });
 
@@ -61,10 +61,10 @@ export class PhylogeneticAnalysisClient {
     try {
       // Step 1: Get orthologs for the gene
       const orthologs = await this.getOrthologs(geneId, species);
-      
+
       // Step 2: Build distance matrix based on sequence similarity
       const distanceMatrix = await this.calculateDistanceMatrix(orthologs);
-      
+
       // Step 3: Construct tree using specified method
       let tree;
       switch (treeMethod) {
@@ -77,13 +77,13 @@ export class PhylogeneticAnalysisClient {
         default:
           tree = this.neighborJoining(distanceMatrix);
       }
-      
+
       // Step 4: Add additional annotations
       const annotatedTree = await this.annotateTree(tree, orthologs);
-      
+
       // Step 5: Generate visualization-ready format
       const visualTree = this.formatForVisualization(annotatedTree);
-      
+
       return {
         geneFamily: geneId,
         method: treeMethod,
@@ -92,7 +92,7 @@ export class PhylogeneticAnalysisClient {
         newick: this.toNewick(annotatedTree),
         statistics: this.calculateTreeStatistics(annotatedTree)
       };
-      
+
     } catch (error) {
       throw new Error(`Failed to build phylogenetic tree: ${error.message}`);
     }
@@ -109,18 +109,18 @@ export class PhylogeneticAnalysisClient {
     try {
       const response = await this.client.get(`/gene/${geneId}/orthologs`);
       let orthologs = response.data.results || [];
-      
+
       // Filter by species if specified
       if (!speciesList.includes('all')) {
-        orthologs = orthologs.filter(o => 
+        orthologs = orthologs.filter(o =>
           speciesList.some(s => o.species?.toLowerCase().includes(s.toLowerCase()))
         );
       }
-      
+
       // Add the query gene itself
       const queryGeneResponse = await this.client.get(`/gene/${geneId}`);
       const queryGene = queryGeneResponse.data;
-      
+
       const result = [
         {
           id: geneId,
@@ -138,10 +138,10 @@ export class PhylogeneticAnalysisClient {
           bestReverse: o.bestReverse
         }))
       ];
-      
+
       this.cache.set(cacheKey, result);
       return result;
-      
+
     } catch (error) {
       throw new Error(`Failed to get orthologs: ${error.message}`);
     }
@@ -153,19 +153,19 @@ export class PhylogeneticAnalysisClient {
   async calculateDistanceMatrix(orthologs) {
     const n = orthologs.length;
     const matrix = Array(n).fill(null).map(() => Array(n).fill(0));
-    
+
     // Simple distance based on species divergence times
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
         const species1 = orthologs[i].species;
         const species2 = orthologs[j].species;
-        
+
         const distance = this.getEvolutionaryDistance(species1, species2);
         matrix[i][j] = distance;
         matrix[j][i] = distance;
       }
     }
-    
+
     return {
       genes: orthologs,
       distances: matrix
@@ -178,7 +178,7 @@ export class PhylogeneticAnalysisClient {
   getEvolutionaryDistance(species1, species2) {
     const info1 = this.speciesInfo[species1] || { divergence: 500 };
     const info2 = this.speciesInfo[species2] || { divergence: 500 };
-    
+
     // Simplified distance calculation based on divergence times
     return Math.abs(info1.divergence - info2.divergence) / 100;
   }
@@ -189,7 +189,7 @@ export class PhylogeneticAnalysisClient {
   neighborJoining(distanceMatrix) {
     const { genes, distances } = distanceMatrix;
     const n = genes.length;
-    
+
     if (n <= 2) {
       return {
         type: 'simple',
@@ -197,26 +197,26 @@ export class PhylogeneticAnalysisClient {
         distance: distances[0]?.[1] || 0
       };
     }
-    
+
     // Initialize nodes
-    let nodes = genes.map((gene, i) => ({
+    const nodes = genes.map((gene, i) => ({
       id: `leaf_${i}`,
-      gene: gene,
+      gene,
       type: 'leaf',
       height: 0
     }));
-    
+
     let activeNodes = [...Array(n).keys()];
     let currentDistances = distances.map(row => [...row]);
     let nodeIdCounter = n;
-    
+
     // Build tree
     while (activeNodes.length > 2) {
       // Calculate Q-matrix
       const q = this.calculateQMatrix(currentDistances, activeNodes);
-      
+
       // Find minimum Q value
-      let minI = 0, minJ = 1, minVal = q[0][1];
+      let minI = 0; let minJ = 1; let minVal = q[0][1];
       for (let i = 0; i < activeNodes.length; i++) {
         for (let j = i + 1; j < activeNodes.length; j++) {
           if (q[i][j] < minVal) {
@@ -226,7 +226,7 @@ export class PhylogeneticAnalysisClient {
           }
         }
       }
-      
+
       // Create new internal node
       const newNode = {
         id: `internal_${nodeIdCounter++}`,
@@ -235,7 +235,7 @@ export class PhylogeneticAnalysisClient {
         right: nodes[activeNodes[minJ]],
         height: currentDistances[minI][minJ] / 2
       };
-      
+
       // Update distances for new node
       const newDistances = [];
       for (let k = 0; k < activeNodes.length; k++) {
@@ -244,12 +244,12 @@ export class PhylogeneticAnalysisClient {
           newDistances.push(dist);
         }
       }
-      
+
       // Remove old nodes and add new node
       nodes.push(newNode);
       const newActiveNodes = activeNodes.filter((_, i) => i !== minI && i !== minJ);
       newActiveNodes.push(nodes.length - 1);
-      
+
       // Update distance matrix
       const newMatrix = [];
       for (let i = 0; i < newActiveNodes.length - 1; i++) {
@@ -262,18 +262,18 @@ export class PhylogeneticAnalysisClient {
           }
         }
       }
-      
+
       // Add new node distances
       newMatrix.push(newDistances);
       for (let i = 0; i < newDistances.length; i++) {
         if (!newMatrix[i]) newMatrix[i] = [];
         newMatrix[i].push(newDistances[i]);
       }
-      
+
       activeNodes = newActiveNodes;
       currentDistances = newMatrix;
     }
-    
+
     // Create root
     return {
       id: 'root',
@@ -290,12 +290,12 @@ export class PhylogeneticAnalysisClient {
   calculateQMatrix(distances, activeNodes) {
     const n = activeNodes.length;
     const q = Array(n).fill(null).map(() => Array(n).fill(0));
-    
+
     // Calculate row sums
-    const rowSums = activeNodes.map(i => 
+    const rowSums = activeNodes.map(i =>
       activeNodes.reduce((sum, j) => sum + (distances[i]?.[j] || 0), 0)
     );
-    
+
     // Calculate Q values
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
@@ -304,7 +304,7 @@ export class PhylogeneticAnalysisClient {
         q[j][i] = q[i][j];
       }
     }
-    
+
     return q;
   }
 
@@ -315,7 +315,7 @@ export class PhylogeneticAnalysisClient {
     // Simplified UPGMA implementation
     const { genes, distances } = distanceMatrix;
     const n = genes.length;
-    
+
     if (n <= 2) {
       return {
         type: 'simple',
@@ -323,23 +323,23 @@ export class PhylogeneticAnalysisClient {
         distance: distances[0]?.[1] || 0
       };
     }
-    
+
     // Initialize clusters
     let clusters = genes.map((gene, i) => ({
       id: `leaf_${i}`,
-      gene: gene,
+      gene,
       type: 'leaf',
       height: 0,
       size: 1
     }));
-    
+
     let currentDistances = distances.map(row => [...row]);
     let nodeIdCounter = n;
-    
+
     // Build tree
     while (clusters.length > 1) {
       // Find minimum distance
-      let minI = 0, minJ = 1, minDist = currentDistances[0][1];
+      let minI = 0; let minJ = 1; let minDist = currentDistances[0][1];
       for (let i = 0; i < clusters.length; i++) {
         for (let j = i + 1; j < clusters.length; j++) {
           if (currentDistances[i][j] < minDist) {
@@ -349,7 +349,7 @@ export class PhylogeneticAnalysisClient {
           }
         }
       }
-      
+
       // Create new cluster
       const newCluster = {
         id: `internal_${nodeIdCounter++}`,
@@ -359,22 +359,22 @@ export class PhylogeneticAnalysisClient {
         height: minDist / 2,
         size: clusters[minI].size + clusters[minJ].size
       };
-      
+
       // Update distances (UPGMA formula)
       const newDistances = [];
       for (let k = 0; k < clusters.length; k++) {
         if (k !== minI && k !== minJ) {
-          const dist = (clusters[minI].size * currentDistances[minI][k] + 
-                       clusters[minJ].size * currentDistances[minJ][k]) / 
-                       (clusters[minI].size + clusters[minJ].size);
+          const dist = (clusters[minI].size * currentDistances[minI][k]
+                       + clusters[minJ].size * currentDistances[minJ][k])
+                       / (clusters[minI].size + clusters[minJ].size);
           newDistances.push(dist);
         }
       }
-      
+
       // Update clusters and distance matrix
       clusters = clusters.filter((_, i) => i !== minI && i !== minJ);
       clusters.push(newCluster);
-      
+
       // Rebuild distance matrix
       const newMatrix = [];
       for (let i = 0; i < clusters.length - 1; i++) {
@@ -382,7 +382,7 @@ export class PhylogeneticAnalysisClient {
       }
       currentDistances = newMatrix;
     }
-    
+
     return clusters[0];
   }
 
@@ -395,7 +395,7 @@ export class PhylogeneticAnalysisClient {
         node.species = node.gene.species;
         node.symbol = node.gene.symbol;
         node.name = node.gene.name;
-        
+
         // Add species-specific color
         const speciesColors = {
           'Homo sapiens': '#FF6B6B',
@@ -409,12 +409,12 @@ export class PhylogeneticAnalysisClient {
       } else if (node.left && node.right) {
         annotate(node.left);
         annotate(node.right);
-        
+
         // Calculate bootstrap value (simplified)
         node.bootstrap = Math.floor(Math.random() * 30 + 70);
       }
     };
-    
+
     annotate(tree);
     return tree;
   }
@@ -426,11 +426,11 @@ export class PhylogeneticAnalysisClient {
     const format = (node, x = 0, y = 0, depth = 0) => {
       const result = {
         id: node.id,
-        x: x,
-        y: y,
-        depth: depth
+        x,
+        y,
+        depth
       };
-      
+
       if (node.type === 'leaf') {
         result.name = `${node.symbol} (${node.species})`;
         result.species = node.species;
@@ -445,10 +445,10 @@ export class PhylogeneticAnalysisClient {
         }
         result.bootstrap = node.bootstrap;
       }
-      
+
       return result;
     };
-    
+
     return format(tree, 300, 50, 0);
   }
 
@@ -461,14 +461,14 @@ export class PhylogeneticAnalysisClient {
         const name = `${node.symbol}_${node.species?.replace(/ /g, '_')}`;
         return `${name}:${node.height || 0}`;
       }
-      
+
       const left = node.left ? convert(node.left) : '';
       const right = node.right ? convert(node.right) : '';
       const bootstrap = node.bootstrap ? `[${node.bootstrap}]` : '';
-      
+
       return `(${left},${right})${bootstrap}:${node.height || 0}`;
     };
-    
+
     return convert(tree) + ';';
   }
 
@@ -479,7 +479,7 @@ export class PhylogeneticAnalysisClient {
     let leafCount = 0;
     let totalBranchLength = 0;
     let maxDepth = 0;
-    
+
     const traverse = (node, depth = 0) => {
       if (node.type === 'leaf') {
         leafCount++;
@@ -490,13 +490,13 @@ export class PhylogeneticAnalysisClient {
       }
       totalBranchLength += node.height || 0;
     };
-    
+
     traverse(tree);
-    
+
     return {
       leaves: leafCount,
       totalBranchLength: totalBranchLength.toFixed(2),
-      maxDepth: maxDepth,
+      maxDepth,
       averageBranchLength: (totalBranchLength / leafCount).toFixed(2)
     };
   }
@@ -508,7 +508,7 @@ export class PhylogeneticAnalysisClient {
     // Robinson-Foulds distance (simplified)
     const getSplits = (tree) => {
       const splits = new Set();
-      
+
       const traverse = (node, ancestors = new Set()) => {
         if (node.type === 'leaf') {
           splits.add([...ancestors].sort().join('|'));
@@ -519,17 +519,17 @@ export class PhylogeneticAnalysisClient {
           if (node.right) traverse(node.right, newAncestors);
         }
       };
-      
+
       traverse(tree);
       return splits;
     };
-    
+
     const splits1 = getSplits(tree1);
     const splits2 = getSplits(tree2);
-    
+
     const intersection = new Set([...splits1].filter(x => splits2.has(x)));
     const union = new Set([...splits1, ...splits2]);
-    
+
     return {
       robinsonFoulds: union.size - intersection.size,
       similarity: intersection.size / union.size
@@ -547,26 +547,26 @@ export class PhylogeneticAnalysisClient {
 
     try {
       const orthologs = await this.getOrthologs(geneId, species);
-      
+
       // Calculate conservation scores
       const scores = orthologs.map(o => ({
         species: o.species,
         symbol: o.symbol,
         conservationScore: o.bestScore || Math.random() * 0.5 + 0.5 // Simulated if no score
       }));
-      
+
       // Calculate average conservation
       const avgConservation = scores.reduce((sum, s) => sum + s.conservationScore, 0) / scores.length;
-      
+
       return {
         gene: geneId,
         species: species.length,
-        scores: scores,
+        scores,
         averageConservation: avgConservation.toFixed(3),
         highlyConserved: avgConservation > 0.7,
         interpretation: this.interpretConservation(avgConservation)
       };
-      
+
     } catch (error) {
       throw new Error(`Failed to calculate conservation score: ${error.message}`);
     }

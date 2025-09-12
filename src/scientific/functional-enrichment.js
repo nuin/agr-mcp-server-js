@@ -1,6 +1,6 @@
 /**
  * Functional Enrichment Analysis Module
- * 
+ *
  * Provides comprehensive functional enrichment analysis using GO terms,
  * KEGG pathways, Reactome, and GSEA for gene set interpretation.
  */
@@ -24,40 +24,40 @@ export class FunctionalEnrichmentClient {
   constructor(options = {}) {
     this.timeout = options.timeout || 30000;
     this.cache = new NodeCache({ stdTTL: CACHE_TTL });
-    
+
     // Create axios instances
     this.goClient = axios.create({
       baseURL: GO_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.reactomeClient = axios.create({
       baseURL: REACTOME_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.enrichrClient = axios.create({
       baseURL: ENRICHR_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
 
     // Gene set databases
     this.databases = {
-      'GO_Biological_Process': 'GO biological processes',
-      'GO_Molecular_Function': 'GO molecular functions', 
-      'GO_Cellular_Component': 'GO cellular components',
-      'KEGG_2021_Human': 'KEGG pathways',
-      'Reactome_2022': 'Reactome pathways',
-      'WikiPathways_2023_Human': 'WikiPathways',
-      'BioPlanet_2019': 'BioPlanet pathways',
-      'MSigDB_Hallmark_2020': 'MSigDB Hallmark',
-      'MSigDB_Oncogenic_Signatures': 'Oncogenic signatures',
-      'Human_Phenotype_Ontology': 'Disease phenotypes',
-      'DisGeNET': 'Disease-gene associations',
-      'GWAS_Catalog_2019': 'GWAS associations'
+      GO_Biological_Process: 'GO biological processes',
+      GO_Molecular_Function: 'GO molecular functions',
+      GO_Cellular_Component: 'GO cellular components',
+      KEGG_2021_Human: 'KEGG pathways',
+      Reactome_2022: 'Reactome pathways',
+      WikiPathways_2023_Human: 'WikiPathways',
+      BioPlanet_2019: 'BioPlanet pathways',
+      MSigDB_Hallmark_2020: 'MSigDB Hallmark',
+      MSigDB_Oncogenic_Signatures: 'Oncogenic signatures',
+      Human_Phenotype_Ontology: 'Disease phenotypes',
+      DisGeNET: 'Disease-gene associations',
+      GWAS_Catalog_2019: 'GWAS associations'
     };
 
     // Significance thresholds
@@ -96,7 +96,7 @@ export class FunctionalEnrichmentClient {
         inputGenes: {
           total: geneList.length,
           genes: geneList,
-          background: background
+          background
         },
         enrichment: {},
         summary: {},
@@ -105,7 +105,7 @@ export class FunctionalEnrichmentClient {
       };
 
       // Run enrichment for each database
-      const enrichmentPromises = databases.map(db => 
+      const enrichmentPromises = databases.map(db =>
         this.runSingleEnrichment(geneList, db, {
           species,
           pValueThreshold,
@@ -152,11 +152,11 @@ export class FunctionalEnrichmentClient {
   async runSingleEnrichment(geneList, database, options) {
     try {
       // Use Enrichr API for most databases
-      if (database.startsWith('GO_') || database.includes('KEGG') || 
-          database.includes('Reactome') || database.includes('MSigDB')) {
+      if (database.startsWith('GO_') || database.includes('KEGG')
+          || database.includes('Reactome') || database.includes('MSigDB')) {
         return await this.runEnrichrAnalysis(geneList, database, options);
       }
-      
+
       // Custom implementation for specific databases
       if (database.startsWith('GO_')) {
         return await this.runGOEnrichment(geneList, database, options);
@@ -176,7 +176,7 @@ export class FunctionalEnrichmentClient {
   async runEnrichrAnalysis(geneList, database, options) {
     try {
       // Step 1: Submit gene list
-      const submitResponse = await this.enrichrClient.post('/addList', 
+      const submitResponse = await this.enrichrClient.post('/addList',
         new URLSearchParams({
           list: geneList.join('\n'),
           description: `Enrichment analysis for ${geneList.length} genes`
@@ -197,7 +197,7 @@ export class FunctionalEnrichmentClient {
 
       const enrichmentData = enrichmentResponse.data[database];
       if (!enrichmentData) {
-        return { terms: [], database: database };
+        return { terms: [], database };
       }
 
       // Step 3: Process results
@@ -212,13 +212,13 @@ export class FunctionalEnrichmentClient {
           genes: term[5] ? term[5].split(';') : [],
           overlap: term[5] ? term[5].split(';').length : 0,
           termSize: parseInt(term[3]) || 0,
-          database: database,
+          database,
           url: this.generateTermURL(term[1], database)
         }))
         .sort((a, b) => a.adjustedPValue - b.adjustedPValue);
 
       return {
-        database: database,
+        database,
         terms: terms.slice(0, 50), // Top 50 terms
         totalTerms: enrichmentData.length,
         significantTerms: terms.length
@@ -226,7 +226,7 @@ export class FunctionalEnrichmentClient {
 
     } catch (error) {
       console.error(`Enrichr analysis error for ${database}:`, error.message);
-      return { terms: [], database: database, error: error.message };
+      return { terms: [], database, error: error.message };
     }
   }
 
@@ -235,25 +235,25 @@ export class FunctionalEnrichmentClient {
    */
   async runGOEnrichment(geneList, database, options) {
     try {
-      const goAspect = database.includes('Biological') ? 'biological_process' :
-                     database.includes('Molecular') ? 'molecular_function' :
-                     'cellular_component';
+      const goAspect = database.includes('Biological') ? 'biological_process'
+        : database.includes('Molecular') ? 'molecular_function'
+          : 'cellular_component';
 
       // Get GO annotations for genes
       const annotations = await this.getGOAnnotations(geneList, goAspect);
-      
+
       // Calculate enrichment
       const enrichedTerms = this.calculateGOEnrichment(annotations, options);
 
       return {
-        database: database,
+        database,
         terms: enrichedTerms,
         aspect: goAspect
       };
 
     } catch (error) {
-      console.error(`GO enrichment error:`, error.message);
-      return { terms: [], database: database, error: error.message };
+      console.error('GO enrichment error:', error.message);
+      return { terms: [], database, error: error.message };
     }
   }
 
@@ -265,7 +265,7 @@ export class FunctionalEnrichmentClient {
       const response = await this.goClient.get('/annotation/search', {
         params: {
           geneProductId: geneList.join(','),
-          aspect: aspect,
+          aspect,
           geneProductType: 'protein',
           taxonId: 9606, // Human
           limit: 1000
@@ -306,7 +306,7 @@ export class FunctionalEnrichmentClient {
 
     // Calculate enrichment statistics
     const enrichedTerms = [];
-    
+
     termCounts.forEach((data, termId) => {
       if (data.count >= options.minOverlap) {
         const pValue = this.calculateHypergeometricTest(
@@ -318,8 +318,8 @@ export class FunctionalEnrichmentClient {
 
         enrichedTerms.push({
           term: data.term,
-          termId: termId,
-          pValue: pValue,
+          termId,
+          pValue,
           adjustedPValue: pValue * termCounts.size, // Bonferroni
           overlap: data.count,
           genes: Array.from(data.genes),
@@ -351,8 +351,8 @@ export class FunctionalEnrichmentClient {
     try {
       // Calculate enrichment score
       const enrichmentScore = this.calculateEnrichmentScore(
-        rankedGeneList, 
-        geneSet, 
+        rankedGeneList,
+        geneSet,
         { weighted, power }
       );
 
@@ -377,9 +377,9 @@ export class FunctionalEnrichmentClient {
           size: geneSet.genes.length,
           overlap: leadingEdge.length
         },
-        enrichmentScore: enrichmentScore,
-        normalizedES: normalizedES,
-        pValue: pValue,
+        enrichmentScore,
+        normalizedES,
+        pValue,
         fdr: pValue, // Simplified - would need multiple comparisons
         leadingEdgeGenes: leadingEdge,
         runningSum: this.calculateRunningSum(rankedGeneList, geneSet),
@@ -397,19 +397,19 @@ export class FunctionalEnrichmentClient {
   calculateEnrichmentScore(rankedList, geneSet, options) {
     const { weighted, power } = options;
     const setGenes = new Set(geneSet.genes || geneSet);
-    
+
     let runningSum = 0;
     let maxES = 0;
     let minES = 0;
-    
+
     // Calculate sum of ranks for genes in set
     const rankSum = rankedList
       .map((gene, index) => setGenes.has(gene.symbol || gene) ? Math.pow(Math.abs(gene.score || 1), power) : 0)
       .reduce((a, b) => a + b, 0);
-    
+
     rankedList.forEach((gene, index) => {
       const geneSymbol = gene.symbol || gene;
-      
+
       if (setGenes.has(geneSymbol)) {
         // Gene is in set - add positive contribution
         const weight = weighted ? Math.pow(Math.abs(gene.score || 1), power) / rankSum : 1 / setGenes.size;
@@ -418,12 +418,12 @@ export class FunctionalEnrichmentClient {
         // Gene is not in set - add negative contribution
         runningSum -= 1 / (rankedList.length - setGenes.size);
       }
-      
+
       // Track max and min enrichment scores
       maxES = Math.max(maxES, runningSum);
       minES = Math.min(minES, runningSum);
     });
-    
+
     // Return the enrichment score with highest absolute value
     return Math.abs(maxES) > Math.abs(minES) ? maxES : minES;
   }
@@ -435,23 +435,23 @@ export class FunctionalEnrichmentClient {
     const setGenes = new Set(geneSet.genes || geneSet);
     const runningSum = [];
     let sum = 0;
-    
+
     rankedList.forEach((gene, index) => {
       const geneSymbol = gene.symbol || gene;
-      
+
       if (setGenes.has(geneSymbol)) {
         sum += 1 / setGenes.size;
       } else {
         sum -= 1 / (rankedList.length - setGenes.size);
       }
-      
+
       runningSum.push({
         position: index,
-        sum: sum,
+        sum,
         inSet: setGenes.has(geneSymbol)
       });
     });
-    
+
     return runningSum;
   }
 
@@ -491,33 +491,33 @@ export class FunctionalEnrichmentClient {
   findLeadingEdgeGenes(rankedList, geneSet, enrichmentScore) {
     const setGenes = new Set(geneSet.genes || geneSet);
     const leadingEdge = [];
-    
+
     let runningSum = 0;
     let maxSum = 0;
     let maxIndex = 0;
-    
+
     // Find position of maximum enrichment score
     rankedList.forEach((gene, index) => {
       const geneSymbol = gene.symbol || gene;
-      
+
       if (setGenes.has(geneSymbol)) {
         runningSum += 1 / setGenes.size;
       } else {
         runningSum -= 1 / (rankedList.length - setGenes.size);
       }
-      
-      if ((enrichmentScore > 0 && runningSum > maxSum) || 
-          (enrichmentScore < 0 && runningSum < maxSum)) {
+
+      if ((enrichmentScore > 0 && runningSum > maxSum)
+          || (enrichmentScore < 0 && runningSum < maxSum)) {
         maxSum = runningSum;
         maxIndex = index;
       }
     });
-    
+
     // Collect leading edge genes
     for (let i = 0; i <= maxIndex; i++) {
       const gene = rankedList[i];
       const geneSymbol = gene.symbol || gene;
-      
+
       if (setGenes.has(geneSymbol)) {
         leadingEdge.push({
           gene: geneSymbol,
@@ -526,7 +526,7 @@ export class FunctionalEnrichmentClient {
         });
       }
     }
-    
+
     return leadingEdge;
   }
 
@@ -540,15 +540,15 @@ export class FunctionalEnrichmentClient {
         return `https://www.ebi.ac.uk/QuickGO/term/${goId[0].replace(/[()]/g, '')}`;
       }
     }
-    
+
     if (database.includes('KEGG')) {
       return `https://www.genome.jp/entry/pathway+${term}`;
     }
-    
+
     if (database.includes('Reactome')) {
       return `https://reactome.org/content/detail/${term}`;
     }
-    
+
     return null;
   }
 
@@ -561,10 +561,10 @@ export class FunctionalEnrichmentClient {
     // n: sample size
     // K: number of successes in population
     // N: population size
-    
+
     const expected = (n * K) / N;
     const enrichmentRatio = k / expected;
-    
+
     // Simplified p-value calculation
     return Math.exp(-enrichmentRatio * enrichmentRatio);
   }
@@ -585,7 +585,7 @@ export class FunctionalEnrichmentClient {
       if (result.terms) {
         summary.totalTerms += result.totalTerms || result.terms.length;
         summary.significantTerms += result.terms.length;
-        
+
         // Top term per database
         if (result.terms.length > 0) {
           summary.topTermsByDatabase[database] = {
@@ -624,7 +624,7 @@ export class FunctionalEnrichmentClient {
       if (result.terms) {
         result.terms.forEach(term => {
           const termLower = term.term.toLowerCase();
-          
+
           keywords.forEach(keyword => {
             if (termLower.includes(keyword)) {
               themes[keyword].count++;
@@ -643,7 +643,7 @@ export class FunctionalEnrichmentClient {
     return Object.entries(themes)
       .filter(([theme, data]) => data.count >= 2)
       .map(([theme, data]) => ({
-        theme: theme,
+        theme,
         count: data.count,
         topTerm: data.terms.sort((a, b) => a.pValue - b.pValue)[0]
       }))
@@ -667,7 +667,7 @@ export class FunctionalEnrichmentClient {
    */
   createBarChartData(enrichmentResults) {
     const allTerms = [];
-    
+
     Object.values(enrichmentResults).forEach(result => {
       if (result.terms) {
         allTerms.push(...result.terms.slice(0, 5)); // Top 5 per database
@@ -691,7 +691,7 @@ export class FunctionalEnrichmentClient {
    */
   createDotPlotData(enrichmentResults) {
     const dotData = [];
-    
+
     Object.entries(enrichmentResults).forEach(([database, result]) => {
       if (result.terms) {
         result.terms.slice(0, 10).forEach(term => {
@@ -700,7 +700,7 @@ export class FunctionalEnrichmentClient {
             y: -Math.log10(term.adjustedPValue),
             size: term.termSize || term.overlap,
             term: term.term,
-            database: database,
+            database,
             color: this.getDatabaseColor(database)
           });
         });
@@ -779,14 +779,14 @@ export class FunctionalEnrichmentClient {
    */
   getDatabaseColor(database) {
     const colors = {
-      'GO_Biological_Process': '#1f77b4',
-      'GO_Molecular_Function': '#ff7f0e', 
-      'GO_Cellular_Component': '#2ca02c',
-      'KEGG_2021_Human': '#d62728',
-      'Reactome_2022': '#9467bd',
-      'WikiPathways_2023_Human': '#8c564b'
+      GO_Biological_Process: '#1f77b4',
+      GO_Molecular_Function: '#ff7f0e',
+      GO_Cellular_Component: '#2ca02c',
+      KEGG_2021_Human: '#d62728',
+      Reactome_2022: '#9467bd',
+      WikiPathways_2023_Human: '#8c564b'
     };
-    
+
     return colors[database] || '#e377c2';
   }
 
@@ -795,21 +795,21 @@ export class FunctionalEnrichmentClient {
    */
   generateRecommendations(results) {
     const recommendations = [];
-    
+
     if (results.summary.significantTerms === 0) {
       recommendations.push('No significant enrichment found. Consider using a larger gene set or different background.');
       return recommendations;
     }
-    
+
     if (results.summary.functionalThemes.length > 0) {
       const topTheme = results.summary.functionalThemes[0];
       recommendations.push(`Strong enrichment in ${topTheme.theme}-related processes (${topTheme.count} terms)`);
     }
-    
+
     if (results.summary.significantTerms > 50) {
       recommendations.push('Large number of enriched terms suggests broad functional impact');
     }
-    
+
     // Database-specific recommendations
     Object.entries(results.enrichment).forEach(([db, result]) => {
       if (result.terms && result.terms.length > 0) {
@@ -819,7 +819,7 @@ export class FunctionalEnrichmentClient {
         }
       }
     });
-    
+
     return recommendations;
   }
 
@@ -827,10 +827,10 @@ export class FunctionalEnrichmentClient {
    * Interpret GSEA result
    */
   interpretGSEAResult(enrichmentScore, pValue) {
-    let direction = enrichmentScore > 0 ? 'positively' : 'negatively';
-    let significance = pValue < 0.01 ? 'highly significant' : 
-                      pValue < 0.05 ? 'significant' : 'not significant';
-    
+    const direction = enrichmentScore > 0 ? 'positively' : 'negatively';
+    const significance = pValue < 0.01 ? 'highly significant'
+      : pValue < 0.05 ? 'significant' : 'not significant';
+
     return `Gene set is ${direction} enriched (${significance})`;
   }
 }

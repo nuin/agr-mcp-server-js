@@ -1,6 +1,6 @@
 /**
  * Pathway Analysis Module with KEGG Integration
- * 
+ *
  * Provides pathway enrichment analysis and visualization
  * for gene sets using KEGG, Reactome, and GO databases.
  */
@@ -23,24 +23,24 @@ export class PathwayAnalysisClient {
   constructor(options = {}) {
     this.timeout = options.timeout || 30000;
     this.cache = new NodeCache({ stdTTL: CACHE_TTL });
-    
+
     // Create axios instances for different APIs
     this.keggClient = axios.create({
       baseURL: KEGG_API_BASE,
       timeout: this.timeout,
-      headers: { 'Accept': 'text/plain' }
+      headers: { Accept: 'text/plain' }
     });
-    
+
     this.reactomeClient = axios.create({
       baseURL: REACTOME_API_BASE,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.goClient = axios.create({
       baseURL: GO_API_BASE,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
 
     // Species mapping for KEGG organisms
@@ -56,12 +56,12 @@ export class PathwayAnalysisClient {
 
     // Pathway categories
     this.pathwayCategories = {
-      'metabolism': ['Carbohydrate', 'Energy', 'Lipid', 'Amino acid', 'Nucleotide'],
-      'genetic': ['Transcription', 'Translation', 'Replication', 'Repair'],
-      'signaling': ['Signal transduction', 'Cell communication', 'Endocrine'],
-      'cellular': ['Cell growth', 'Cell death', 'Cell motility', 'Transport'],
-      'disease': ['Cancer', 'Immune disease', 'Neurodegenerative', 'Infectious'],
-      'immune': ['Innate immunity', 'Adaptive immunity', 'Complement']
+      metabolism: ['Carbohydrate', 'Energy', 'Lipid', 'Amino acid', 'Nucleotide'],
+      genetic: ['Transcription', 'Translation', 'Replication', 'Repair'],
+      signaling: ['Signal transduction', 'Cell communication', 'Endocrine'],
+      cellular: ['Cell growth', 'Cell death', 'Cell motility', 'Transport'],
+      disease: ['Cancer', 'Immune disease', 'Neurodegenerative', 'Infectious'],
+      immune: ['Innate immunity', 'Adaptive immunity', 'Complement']
     };
   }
 
@@ -84,7 +84,7 @@ export class PathwayAnalysisClient {
 
     const results = {
       gene: geneSymbol,
-      species: species,
+      species,
       pathways: {
         kegg: [],
         reactome: [],
@@ -96,7 +96,7 @@ export class PathwayAnalysisClient {
     try {
       // Fetch from each database in parallel
       const promises = [];
-      
+
       if (databases.includes('kegg')) {
         promises.push(this.getKeggPathways(geneSymbol, species));
       }
@@ -106,9 +106,9 @@ export class PathwayAnalysisClient {
       if (databases.includes('go')) {
         promises.push(this.getGOTerms(geneSymbol, species));
       }
-      
+
       const pathwayData = await Promise.allSettled(promises);
-      
+
       // Process results
       let index = 0;
       if (databases.includes('kegg') && pathwayData[index].status === 'fulfilled') {
@@ -122,18 +122,18 @@ export class PathwayAnalysisClient {
       if (databases.includes('go') && pathwayData[index].status === 'fulfilled') {
         results.pathways.go = pathwayData[index].value;
       }
-      
+
       // Generate summary
       results.summary = this.generatePathwaySummary(results.pathways);
-      
+
       // Add interactions if requested
       if (includeInteractions) {
         results.interactions = await this.getPathwayInteractions(geneSymbol, results.pathways);
       }
-      
+
       this.cache.set(cacheKey, results);
       return results;
-      
+
     } catch (error) {
       throw new Error(`Failed to get pathways: ${error.message}`);
     }
@@ -144,31 +144,31 @@ export class PathwayAnalysisClient {
    */
   async getKeggPathways(geneSymbol, species) {
     const organism = this.keggOrganisms[species] || 'hsa';
-    
+
     try {
       // First, find the gene in KEGG
       const findResponse = await this.keggClient.get(`/find/${organism}/${geneSymbol}`);
       const lines = findResponse.data.split('\n').filter(line => line);
-      
+
       if (lines.length === 0) {
         return [];
       }
-      
+
       // Extract KEGG gene ID
       const geneId = lines[0].split('\t')[0];
-      
+
       // Get pathways for this gene
       const pathwayResponse = await this.keggClient.get(`/link/pathway/${geneId}`);
       const pathwayLines = pathwayResponse.data.split('\n').filter(line => line);
-      
+
       const pathways = [];
       for (const line of pathwayLines) {
         const pathwayId = line.split('\t')[1];
-        
+
         // Get pathway details
         const detailResponse = await this.keggClient.get(`/get/${pathwayId}`);
         const details = this.parseKeggPathway(detailResponse.data);
-        
+
         pathways.push({
           id: pathwayId,
           name: details.name,
@@ -178,9 +178,9 @@ export class PathwayAnalysisClient {
           url: `https://www.kegg.jp/entry/${pathwayId}`
         });
       }
-      
+
       return pathways;
-      
+
     } catch (error) {
       console.error('KEGG pathway fetch error:', error.message);
       return [];
@@ -198,7 +198,7 @@ export class PathwayAnalysisClient {
       description: '',
       geneCount: 0
     };
-    
+
     for (const line of lines) {
       if (line.startsWith('NAME')) {
         result.name = line.substring(12).trim();
@@ -210,7 +210,7 @@ export class PathwayAnalysisClient {
         result.geneCount++;
       }
     }
-    
+
     return result;
   }
 
@@ -225,12 +225,12 @@ export class PathwayAnalysisClient {
         'Mus musculus': 'Mus musculus',
         'Rattus norvegicus': 'Rattus norvegicus'
       };
-      
+
       const reactomeSpecies = speciesMap[species];
       if (!reactomeSpecies) {
         return [];
       }
-      
+
       // Query Reactome for pathways
       const response = await this.reactomeClient.get('/data/query', {
         params: {
@@ -239,7 +239,7 @@ export class PathwayAnalysisClient {
           types: 'Pathway'
         }
       });
-      
+
       const pathways = response.data.results?.map(pathway => ({
         id: pathway.stId,
         name: pathway.displayName,
@@ -247,9 +247,9 @@ export class PathwayAnalysisClient {
         description: pathway.summation?.[0]?.text || '',
         url: `https://reactome.org/content/detail/${pathway.stId}`
       })) || [];
-      
+
       return pathways.slice(0, 10); // Limit to top 10
-      
+
     } catch (error) {
       console.error('Reactome pathway fetch error:', error.message);
       return [];
@@ -269,7 +269,7 @@ export class PathwayAnalysisClient {
           aspect: 'biological_process,molecular_function,cellular_component'
         }
       });
-      
+
       const terms = response.data.results?.map(term => ({
         id: term.goId,
         name: term.goName,
@@ -277,9 +277,9 @@ export class PathwayAnalysisClient {
         evidence: term.goEvidence,
         url: `https://www.ebi.ac.uk/QuickGO/term/${term.goId}`
       })) || [];
-      
+
       return terms;
-      
+
     } catch (error) {
       console.error('GO term fetch error:', error.message);
       return [];
@@ -305,8 +305,8 @@ export class PathwayAnalysisClient {
       const results = {
         input: {
           genes: geneList.length,
-          background: background,
-          species: species
+          background,
+          species
         },
         enriched: {
           kegg: [],
@@ -315,15 +315,15 @@ export class PathwayAnalysisClient {
         },
         statistics: {}
       };
-      
+
       // Get all pathways for input genes
       const genePathways = await Promise.all(
         geneList.map(gene => this.getGenePathways(gene, { species, databases }))
       );
-      
+
       // Aggregate pathways and count occurrences
       const pathwayCounts = this.aggregatePathways(genePathways);
-      
+
       // Calculate enrichment statistics
       const enrichedPathways = this.calculateEnrichment(
         pathwayCounts,
@@ -332,7 +332,7 @@ export class PathwayAnalysisClient {
         pValueThreshold,
         correctionMethod
       );
-      
+
       // Separate by database
       enrichedPathways.forEach(pathway => {
         if (pathway.database === 'kegg') {
@@ -343,7 +343,7 @@ export class PathwayAnalysisClient {
           results.enriched.go.push(pathway);
         }
       });
-      
+
       // Calculate summary statistics
       results.statistics = {
         totalEnriched: enrichedPathways.length,
@@ -351,9 +351,9 @@ export class PathwayAnalysisClient {
         topPathway: enrichedPathways[0]?.name || 'None',
         avgFoldEnrichment: this.calculateAverageFoldEnrichment(enrichedPathways)
       };
-      
+
       return results;
-      
+
     } catch (error) {
       throw new Error(`Pathway enrichment analysis failed: ${error.message}`);
     }
@@ -364,7 +364,7 @@ export class PathwayAnalysisClient {
    */
   aggregatePathways(genePathways) {
     const pathwayMap = new Map();
-    
+
     genePathways.forEach(geneData => {
       // Process KEGG pathways
       geneData.pathways.kegg?.forEach(pathway => {
@@ -381,7 +381,7 @@ export class PathwayAnalysisClient {
         p.genes.push(geneData.gene);
         p.count++;
       });
-      
+
       // Process Reactome pathways
       geneData.pathways.reactome?.forEach(pathway => {
         const key = `reactome_${pathway.id}`;
@@ -397,7 +397,7 @@ export class PathwayAnalysisClient {
         p.genes.push(geneData.gene);
         p.count++;
       });
-      
+
       // Process GO terms
       geneData.pathways.go?.forEach(term => {
         const key = `go_${term.id}`;
@@ -414,7 +414,7 @@ export class PathwayAnalysisClient {
         p.count++;
       });
     });
-    
+
     return pathwayMap;
   }
 
@@ -423,10 +423,10 @@ export class PathwayAnalysisClient {
    */
   calculateEnrichment(pathwayCounts, inputSize, background, pValueThreshold, correctionMethod) {
     const pathways = Array.from(pathwayCounts.values());
-    
+
     // Calculate background size (simplified)
     const backgroundSize = background === 'genome' ? 20000 : parseInt(background);
-    
+
     // Calculate enrichment for each pathway
     pathways.forEach(pathway => {
       // Hypergeometric test (simplified)
@@ -434,22 +434,22 @@ export class PathwayAnalysisClient {
       const n = inputSize; // Total genes in list
       const K = pathway.geneCount || 100; // Total genes in pathway (estimated)
       const N = backgroundSize; // Total background genes
-      
+
       // Calculate p-value (simplified hypergeometric)
       pathway.pValue = this.hypergeometricPValue(k, n, K, N);
-      
+
       // Calculate fold enrichment
       const expected = (n * K) / N;
       pathway.foldEnrichment = k / expected;
-      
+
       // Calculate gene ratio
       pathway.geneRatio = `${k}/${n}`;
       pathway.bgRatio = `${K}/${N}`;
     });
-    
+
     // Apply multiple testing correction
     this.applyCorrection(pathways, correctionMethod);
-    
+
     // Filter by p-value threshold and sort
     return pathways
       .filter(p => p.adjustedPValue < pValueThreshold)
@@ -471,7 +471,7 @@ export class PathwayAnalysisClient {
    */
   applyCorrection(pathways, method) {
     const m = pathways.length;
-    
+
     if (method === 'bonferroni') {
       pathways.forEach(p => {
         p.adjustedPValue = Math.min(p.pValue * m, 1);
@@ -503,20 +503,20 @@ export class PathwayAnalysisClient {
         go: pathways.go?.length || 0
       }
     };
-    
+
     // Count by category
     const allPathways = [
       ...(pathways.kegg || []),
       ...(pathways.reactome || []),
       ...(pathways.go || [])
     ];
-    
+
     allPathways.forEach(pathway => {
       summary.total++;
       const category = pathway.category || 'Other';
       summary.byCategory[category] = (summary.byCategory[category] || 0) + 1;
     });
-    
+
     return summary;
   }
 
@@ -529,23 +529,23 @@ export class PathwayAnalysisClient {
       pathwayPathway: [],
       crossTalk: []
     };
-    
+
     // Find genes that appear in multiple pathways (crosstalk)
     const pathwayGeneMap = new Map();
-    
+
     const allPathways = [
       ...(pathways.kegg || []),
       ...(pathways.reactome || []),
       ...(pathways.go || [])
     ];
-    
+
     allPathways.forEach(pathway => {
       if (!pathwayGeneMap.has(pathway.id)) {
         pathwayGeneMap.set(pathway.id, new Set());
       }
       pathwayGeneMap.get(pathway.id).add(geneSymbol);
     });
-    
+
     // Identify pathway crosstalk
     const pathwayIds = Array.from(pathwayGeneMap.keys());
     for (let i = 0; i < pathwayIds.length; i++) {
@@ -553,7 +553,7 @@ export class PathwayAnalysisClient {
         const genes1 = pathwayGeneMap.get(pathwayIds[i]);
         const genes2 = pathwayGeneMap.get(pathwayIds[j]);
         const shared = new Set([...genes1].filter(x => genes2.has(x)));
-        
+
         if (shared.size > 0) {
           interactions.crossTalk.push({
             pathway1: pathwayIds[i],
@@ -564,7 +564,7 @@ export class PathwayAnalysisClient {
         }
       }
     }
-    
+
     return interactions;
   }
 
@@ -585,7 +585,7 @@ export class PathwayAnalysisClient {
   generatePathwayNetwork(pathways) {
     const nodes = [];
     const edges = [];
-    
+
     // Create nodes for pathways
     pathways.forEach(pathway => {
       nodes.push({
@@ -598,7 +598,7 @@ export class PathwayAnalysisClient {
         pValue: pathway.adjustedPValue,
         foldEnrichment: pathway.foldEnrichment
       });
-      
+
       // Create nodes for genes
       pathway.genes?.forEach(gene => {
         if (!nodes.find(n => n.id === gene)) {
@@ -610,7 +610,7 @@ export class PathwayAnalysisClient {
             color: '#666666'
           });
         }
-        
+
         // Create edge between gene and pathway
         edges.push({
           source: gene,
@@ -619,7 +619,7 @@ export class PathwayAnalysisClient {
         });
       });
     });
-    
+
     return {
       nodes,
       edges,
@@ -636,9 +636,9 @@ export class PathwayAnalysisClient {
    */
   getDatabaseColor(database) {
     const colors = {
-      'kegg': '#FF6B6B',
-      'reactome': '#4ECDC4',
-      'go': '#45B7D1'
+      kegg: '#FF6B6B',
+      reactome: '#4ECDC4',
+      go: '#45B7D1'
     };
     return colors[database] || '#999999';
   }

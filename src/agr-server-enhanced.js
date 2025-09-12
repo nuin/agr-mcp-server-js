@@ -254,12 +254,37 @@ class EnhancedAGRClient {
   }
 
   /**
-   * Simple gene ID check
+   * Validate gene ID format
    * @param {string} geneId - Gene identifier
-   * @returns {boolean} - Whether ID exists
+   * @returns {boolean} - Whether ID format is valid
    */
   validateGeneId(geneId) {
-    return Boolean(geneId);
+    if (!geneId || typeof geneId !== 'string' || geneId.trim() === '') {
+      return false;
+    }
+    
+    // Check for basic gene ID patterns (HGNC:123, MGI:123, etc.)
+    const geneIdPattern = /^[A-Z]+:\d+$/;
+    const simplePattern = /^[A-Z][A-Z0-9_-]*$/i;
+    
+    return geneIdPattern.test(geneId) || simplePattern.test(geneId);
+  }
+
+  /**
+   * Sanitize query strings
+   * @param {string} query - Input query
+   * @returns {string} - Sanitized query
+   */
+  sanitizeQuery(query) {
+    if (!query || typeof query !== 'string') {
+      return '';
+    }
+    
+    return query
+      .trim()
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/[^\w\s.-]/g, '') // Remove special chars except word chars, spaces, dots, dashes
+      .replace(/\s+/g, ' '); // Normalize whitespace
   }
 
   // =================== COMPLEX QUERY PARSING ===================

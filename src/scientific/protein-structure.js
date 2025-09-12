@@ -1,6 +1,6 @@
 /**
  * Protein Structure Integration Module
- * 
+ *
  * Provides 3D protein structure data from PDB and AlphaFold
  * with domain analysis and structure-function mapping.
  */
@@ -24,24 +24,24 @@ export class ProteinStructureClient {
   constructor(options = {}) {
     this.timeout = options.timeout || 30000;
     this.cache = new NodeCache({ stdTTL: CACHE_TTL });
-    
+
     // Create axios instances
     this.pdbClient = axios.create({
       baseURL: PDB_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.alphafoldClient = axios.create({
       baseURL: ALPHAFOLD_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.uniprotClient = axios.create({
       baseURL: UNIPROT_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
   }
 
@@ -169,12 +169,12 @@ export class ProteinStructureClient {
       if (!pdbData) return [];
 
       const structures = [];
-      
+
       for (const [pdbId, mappings] of Object.entries(pdbData)) {
         const structure = await this.getPDBDetails(pdbId);
         structures.push({
           source: 'PDB',
-          pdbId: pdbId,
+          pdbId,
           title: structure.title,
           resolution: structure.resolution,
           method: structure.method,
@@ -196,7 +196,7 @@ export class ProteinStructureClient {
 
       // Sort by quality score
       structures.sort((a, b) => b.quality.score - a.quality.score);
-      
+
       return structures;
 
     } catch (error) {
@@ -272,9 +272,9 @@ export class ProteinStructureClient {
     try {
       const response = await axios.get(
         `https://www.ebi.ac.uk/interpro/api/protein/uniprot/${uniprotId}`,
-        { 
+        {
           timeout: this.timeout,
-          headers: { 'Accept': 'application/json' }
+          headers: { Accept: 'application/json' }
         }
       );
 
@@ -344,7 +344,7 @@ export class ProteinStructureClient {
     try {
       // Query STRING database for interactions
       const response = await axios.get(
-        `https://string-db.org/api/json/network`,
+        'https://string-db.org/api/json/network',
         {
           params: {
             identifiers: uniprotId,
@@ -462,7 +462,7 @@ export class ProteinStructureClient {
    */
   extractLigands(entry) {
     const ligands = [];
-    
+
     if (entry.rcsb_binding_affinity) {
       entry.rcsb_binding_affinity.forEach(binding => {
         ligands.push({
@@ -482,24 +482,24 @@ export class ProteinStructureClient {
    */
   assessStructureQuality(structure) {
     let score = 50; // Base score
-    
+
     // Resolution (better resolution = higher score)
     if (structure.resolution) {
       if (structure.resolution < 2.0) score += 30;
       else if (structure.resolution < 2.5) score += 20;
       else if (structure.resolution < 3.0) score += 10;
     }
-    
+
     // Method
     if (structure.method === 'X-RAY DIFFRACTION') score += 10;
     else if (structure.method === 'ELECTRON MICROSCOPY') score += 5;
-    
+
     // Recency
     const releaseYear = new Date(structure.releaseDate).getFullYear();
     const currentYear = new Date().getFullYear();
     if (currentYear - releaseYear < 2) score += 10;
     else if (currentYear - releaseYear < 5) score += 5;
-    
+
     return {
       score: Math.min(score, 100),
       assessment: score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : 'Fair'
@@ -574,11 +574,11 @@ export class ProteinStructureClient {
    */
   getDomainColor(type) {
     const colors = {
-      'Family': '#FF6B6B',
-      'Domain': '#4ECDC4',
-      'Repeat': '#45B7D1',
-      'Site': '#96CEB4',
-      'Conserved_site': '#FECA57'
+      Family: '#FF6B6B',
+      Domain: '#4ECDC4',
+      Repeat: '#45B7D1',
+      Site: '#96CEB4',
+      Conserved_site: '#FECA57'
     };
     return colors[type] || '#999999';
   }
@@ -589,9 +589,9 @@ export class ProteinStructureClient {
   calculateOverallQuality(results) {
     const scores = results.structures.map(s => s.quality?.score || 0);
     if (scores.length === 0) return 0;
-    
+
     const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-    
+
     if (avgScore >= 80) return 'Excellent';
     if (avgScore >= 60) return 'Good';
     if (avgScore >= 40) return 'Fair';
@@ -603,7 +603,7 @@ export class ProteinStructureClient {
    */
   predictActiveSites(structure) {
     const sites = [];
-    
+
     structure.features.forEach(feature => {
       if (feature.type === 'act_site' || feature.type === 'ACTIVE_SITE') {
         sites.push({
@@ -614,7 +614,7 @@ export class ProteinStructureClient {
         });
       }
     });
-    
+
     return sites;
   }
 
@@ -623,7 +623,7 @@ export class ProteinStructureClient {
    */
   predictBindingSites(structure) {
     const sites = [];
-    
+
     structure.features.forEach(feature => {
       if (feature.type === 'binding' || feature.type === 'BINDING') {
         sites.push({
@@ -633,7 +633,7 @@ export class ProteinStructureClient {
         });
       }
     });
-    
+
     return sites;
   }
 
@@ -641,7 +641,7 @@ export class ProteinStructureClient {
    * Identify functional domains
    */
   identifyFunctionalDomains(structure) {
-    return structure.domains.filter(d => 
+    return structure.domains.filter(d =>
       d.goTerms && d.goTerms.length > 0
     ).map(d => ({
       name: d.name,
@@ -669,7 +669,7 @@ export class ProteinStructureClient {
    */
   identifyStabilityRegions(structure) {
     const regions = [];
-    
+
     structure.features.forEach(feature => {
       if (feature.type === 'DISULFID' || feature.type === 'disulfide') {
         regions.push({
@@ -679,7 +679,7 @@ export class ProteinStructureClient {
         });
       }
     });
-    
+
     return regions;
   }
 
@@ -714,13 +714,13 @@ export class ProteinStructureClient {
   calculatePredictionConfidence(predictions) {
     let confidence = 0;
     let total = 0;
-    
+
     if (predictions.activeSites.length > 0) { confidence += 20; total += 20; }
     if (predictions.bindingSites.length > 0) { confidence += 20; total += 20; }
     if (predictions.functionalDomains.length > 0) { confidence += 30; total += 30; }
     if (predictions.stabilityRegions.length > 0) { confidence += 15; total += 15; }
     if (predictions.flexibleRegions.length > 0) { confidence += 15; total += 15; }
-    
+
     return total > 0 ? (confidence / total * 100).toFixed(0) + '%' : '0%';
   }
 
@@ -729,19 +729,19 @@ export class ProteinStructureClient {
    */
   generateFunctionalRecommendations(predictions) {
     const recommendations = [];
-    
+
     if (predictions.activeSites.length > 0) {
       recommendations.push(`${predictions.activeSites.length} active sites identified for targeting`);
     }
-    
+
     if (predictions.bindingSites.length > 0) {
       recommendations.push(`${predictions.bindingSites.length} binding sites available for ligand design`);
     }
-    
+
     if (predictions.allostericSites.length > 0) {
       recommendations.push('Allosteric regulation possible');
     }
-    
+
     return recommendations;
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Drug-Gene Interactions Module
- * 
+ *
  * Provides drug-gene interaction data from DGIdb, PharmGKB, and DrugBank
  * for precision medicine and drug repurposing applications.
  */
@@ -14,7 +14,7 @@ const PHARMGKB_API = 'https://api.pharmgkb.org/v1';
 const CHEMBL_API = 'https://www.ebi.ac.uk/chembl/api/data';
 const DRUGBANK_API = 'https://go.drugbank.com/unearth/q'; // Limited public access
 
-// Cache configuration  
+// Cache configuration
 const CACHE_TTL = 7200; // 2 hours for drug data
 
 /**
@@ -24,19 +24,19 @@ export class DrugGeneInteractionsClient {
   constructor(options = {}) {
     this.timeout = options.timeout || 30000;
     this.cache = new NodeCache({ stdTTL: CACHE_TTL });
-    
+
     // Create axios instances
     this.dgidbClient = axios.create({
       baseURL: DGIDB_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.chemblClient = axios.create({
       baseURL: CHEMBL_API,
       timeout: this.timeout,
-      headers: { 
-        'Accept': 'application/json',
+      headers: {
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       }
     });
@@ -56,8 +56,8 @@ export class DrugGeneInteractionsClient {
       '1B': 'FDA-approved drug, off-label use',
       '2A': 'Clinical trial evidence',
       '2B': 'Preclinical evidence (strong)',
-      '3': 'Case reports or observational studies',
-      '4': 'Preclinical evidence (limited)'
+      3: 'Case reports or observational studies',
+      4: 'Preclinical evidence (limited)'
     };
   }
 
@@ -266,21 +266,21 @@ export class DrugGeneInteractionsClient {
   async getClinicalAnnotations(geneSymbol) {
     // Simulated clinical annotations
     const annotations = [];
-    
+
     // Common drug-gene pairs
     const commonPairs = {
-      'CYP2D6': ['codeine', 'tramadol', 'tamoxifen'],
-      'CYP2C19': ['clopidogrel', 'voriconazole', 'citalopram'],
-      'CYP2C9': ['warfarin', 'phenytoin'],
-      'TPMT': ['azathioprine', 'mercaptopurine'],
-      'DPYD': ['fluorouracil', 'capecitabine'],
+      CYP2D6: ['codeine', 'tramadol', 'tamoxifen'],
+      CYP2C19: ['clopidogrel', 'voriconazole', 'citalopram'],
+      CYP2C9: ['warfarin', 'phenytoin'],
+      TPMT: ['azathioprine', 'mercaptopurine'],
+      DPYD: ['fluorouracil', 'capecitabine'],
       'HLA-B': ['abacavir', 'carbamazepine', 'allopurinol']
     };
 
     if (commonPairs[geneSymbol]) {
       commonPairs[geneSymbol].forEach(drug => {
         annotations.push({
-          drug: drug,
+          drug,
           gene: geneSymbol,
           level: '1A',
           annotation: `${geneSymbol} genotype affects ${drug} metabolism/response`,
@@ -323,20 +323,20 @@ export class DrugGeneInteractionsClient {
    */
   calculateRepurposingScore(drug) {
     let score = 0;
-    
+
     // Factor in approval status
     if (drug.approvalStatus === 'Approved') score += 50;
     else if (drug.maxPhase >= 3) score += 30;
     else if (drug.maxPhase >= 2) score += 20;
-    
+
     // Factor in evidence
     score += Math.min(drug.pmids?.length || 0, 10) * 2;
     score += drug.sources?.length || 0;
-    
+
     // Factor in safety
     if (drug.blackBoxWarning) score -= 20;
     if (drug.withdrawn) score -= 50;
-    
+
     return Math.max(score, 0);
   }
 
@@ -345,21 +345,21 @@ export class DrugGeneInteractionsClient {
    */
   generateRepurposingRationale(drug) {
     const rationales = [];
-    
+
     if (drug.approvalStatus === 'Approved') {
       rationales.push('FDA-approved with established safety profile');
     }
-    
+
     if (drug.mechanism === 'inhibitor') {
       rationales.push('Target inhibition may be therapeutic');
     } else if (drug.mechanism === 'activator') {
       rationales.push('Target activation may restore function');
     }
-    
+
     if (drug.pmids?.length > 5) {
       rationales.push(`Strong literature support (${drug.pmids.length} publications)`);
     }
-    
+
     return rationales.join('; ');
   }
 
@@ -400,7 +400,7 @@ export class DrugGeneInteractionsClient {
 
       // Calculate enrichment statistics
       const enrichedDrugs = [];
-      
+
       drugCounts.forEach((count, drug) => {
         if (count >= minDrugs) {
           const pValue = this.calculateHypergeometricPValue(
@@ -409,13 +409,13 @@ export class DrugGeneInteractionsClient {
             100, // Estimated number of drug targets
             20000 // Estimated genome size
           );
-          
+
           if (pValue <= pValueThreshold) {
             enrichedDrugs.push({
-              drug: drug,
+              drug,
               targetCount: count,
               targets: drugTargets.get(drug),
-              pValue: pValue,
+              pValue,
               adjustedPValue: pValue * drugCounts.size, // Bonferroni correction
               enrichmentRatio: count / geneList.length
             });
@@ -429,7 +429,7 @@ export class DrugGeneInteractionsClient {
       return {
         inputGenes: geneList.length,
         totalDrugs: drugCounts.size,
-        enrichedDrugs: enrichedDrugs,
+        enrichedDrugs,
         drugClasses: this.classifyEnrichedDrugs(enrichedDrugs),
         therapeuticAreas: this.identifyTherapeuticAreas(enrichedDrugs),
         recommendations: this.generatePharmacologicalRecommendations(enrichedDrugs)
@@ -446,7 +446,7 @@ export class DrugGeneInteractionsClient {
   extractClinicalTrials(interaction) {
     // Extract NCT numbers from sources or attributes
     const trials = [];
-    
+
     if (interaction.attributes) {
       Object.values(interaction.attributes).forEach(attr => {
         if (attr && attr.includes('NCT')) {
@@ -457,7 +457,7 @@ export class DrugGeneInteractionsClient {
         }
       });
     }
-    
+
     return [...new Set(trials)];
   }
 
@@ -466,7 +466,7 @@ export class DrugGeneInteractionsClient {
    */
   determineApprovalStatus(interaction) {
     const sources = interaction.sources || [];
-    
+
     if (sources.includes('FDA') || sources.includes('DrugBank')) {
       return 'Approved';
     }
@@ -476,7 +476,7 @@ export class DrugGeneInteractionsClient {
     if (sources.includes('ChEMBL') || sources.includes('PubChem')) {
       return 'Experimental';
     }
-    
+
     return 'Investigational';
   }
 
@@ -487,15 +487,15 @@ export class DrugGeneInteractionsClient {
     if (!interactionTypes || interactionTypes.length === 0) {
       return 'unknown';
     }
-    
+
     const types = interactionTypes.map(t => t.toLowerCase());
-    
+
     for (const [category, keywords] of Object.entries(this.interactionTypes)) {
       if (keywords.some(keyword => types.some(t => t.includes(keyword)))) {
         return category;
       }
     }
-    
+
     return 'other';
   }
 
@@ -504,12 +504,12 @@ export class DrugGeneInteractionsClient {
    */
   getApprovalPriority(status) {
     const priorities = {
-      'Approved': 1,
+      Approved: 1,
       'Clinical Trial': 2,
-      'Investigational': 3,
-      'Experimental': 4
+      Investigational: 3,
+      Experimental: 4
     };
-    
+
     return priorities[status] || 5;
   }
 
@@ -519,7 +519,7 @@ export class DrugGeneInteractionsClient {
   mergeDrugData(dgidbDrugs, chemblDrugs) {
     const merged = dgidbDrugs.map(drug => {
       const chemblData = chemblDrugs.find(c => c.chemblId === drug.chemblId);
-      
+
       if (chemblData) {
         return {
           ...drug,
@@ -528,10 +528,10 @@ export class DrugGeneInteractionsClient {
           sources: drug.sources // Keep original sources
         };
       }
-      
+
       return drug;
     });
-    
+
     return merged;
   }
 
@@ -540,11 +540,11 @@ export class DrugGeneInteractionsClient {
    */
   extractTherapeuticAreas(molecule) {
     const areas = new Set();
-    
+
     if (molecule.indication_class) {
       areas.add(molecule.indication_class);
     }
-    
+
     if (molecule.atc_classifications) {
       molecule.atc_classifications.forEach(atc => {
         if (atc.level2_description) {
@@ -552,7 +552,7 @@ export class DrugGeneInteractionsClient {
         }
       });
     }
-    
+
     return Array.from(areas);
   }
 
@@ -561,13 +561,13 @@ export class DrugGeneInteractionsClient {
    */
   getSubstrateDrugs(geneSymbol) {
     const substrates = {
-      'CYP3A4': ['midazolam', 'simvastatin', 'tacrolimus'],
-      'CYP2D6': ['dextromethorphan', 'metoprolol', 'tamoxifen'],
-      'CYP2C19': ['omeprazole', 'clopidogrel', 'voriconazole'],
-      'CYP2C9': ['warfarin', 'tolbutamide', 'phenytoin'],
-      'CYP1A2': ['caffeine', 'theophylline', 'tizanidine']
+      CYP3A4: ['midazolam', 'simvastatin', 'tacrolimus'],
+      CYP2D6: ['dextromethorphan', 'metoprolol', 'tamoxifen'],
+      CYP2C19: ['omeprazole', 'clopidogrel', 'voriconazole'],
+      CYP2C9: ['warfarin', 'tolbutamide', 'phenytoin'],
+      CYP1A2: ['caffeine', 'theophylline', 'tizanidine']
     };
-    
+
     return substrates[geneSymbol] || [];
   }
 
@@ -576,11 +576,11 @@ export class DrugGeneInteractionsClient {
    */
   getInhibitorDrugs(geneSymbol) {
     const inhibitors = {
-      'CYP3A4': ['ketoconazole', 'ritonavir', 'grapefruit juice'],
-      'CYP2D6': ['fluoxetine', 'paroxetine', 'quinidine'],
-      'CYP2C19': ['fluconazole', 'fluvoxamine', 'ticlopidine']
+      CYP3A4: ['ketoconazole', 'ritonavir', 'grapefruit juice'],
+      CYP2D6: ['fluoxetine', 'paroxetine', 'quinidine'],
+      CYP2C19: ['fluconazole', 'fluvoxamine', 'ticlopidine']
     };
-    
+
     return inhibitors[geneSymbol] || [];
   }
 
@@ -589,11 +589,11 @@ export class DrugGeneInteractionsClient {
    */
   getInducerDrugs(geneSymbol) {
     const inducers = {
-      'CYP3A4': ['rifampin', 'carbamazepine', 'St. Johns Wort'],
-      'CYP2C19': ['rifampin', 'prednisone'],
-      'CYP1A2': ['smoking', 'omeprazole', 'chargrilled meat']
+      CYP3A4: ['rifampin', 'carbamazepine', 'St. Johns Wort'],
+      CYP2C19: ['rifampin', 'prednisone'],
+      CYP1A2: ['smoking', 'omeprazole', 'chargrilled meat']
     };
-    
+
     return inducers[geneSymbol] || [];
   }
 
@@ -602,13 +602,13 @@ export class DrugGeneInteractionsClient {
    */
   filterByClinicalRelevance(drugs, level) {
     const levelPriority = {
-      'approved': ['Approved'],
-      'clinical': ['Approved', 'Clinical Trial'],
-      'all': ['Approved', 'Clinical Trial', 'Investigational', 'Experimental']
+      approved: ['Approved'],
+      clinical: ['Approved', 'Clinical Trial'],
+      all: ['Approved', 'Clinical Trial', 'Investigational', 'Experimental']
     };
-    
-    const allowed = levelPriority[level] || levelPriority['all'];
-    
+
+    const allowed = levelPriority[level] || levelPriority.all;
+
     return drugs.filter(drug => allowed.includes(drug.approvalStatus));
   }
 
@@ -625,13 +625,13 @@ export class DrugGeneInteractionsClient {
       hasPharmacogenomics: results.pharmacogenomics !== null,
       repurposingCandidates: results.drugRepurposing.length
     };
-    
+
     // Count by mechanism
     results.drugs.forEach(drug => {
       const mech = drug.mechanism || 'unknown';
       summary.byMechanism[mech] = (summary.byMechanism[mech] || 0) + 1;
     });
-    
+
     return summary;
   }
 
@@ -649,7 +649,7 @@ export class DrugGeneInteractionsClient {
    */
   classifyEnrichedDrugs(enrichedDrugs) {
     const classes = {};
-    
+
     enrichedDrugs.forEach(item => {
       // Simplified classification
       const drugClass = this.getDrugClass(item.drug);
@@ -658,7 +658,7 @@ export class DrugGeneInteractionsClient {
       }
       classes[drugClass].push(item.drug);
     });
-    
+
     return classes;
   }
 
@@ -668,14 +668,14 @@ export class DrugGeneInteractionsClient {
   getDrugClass(drugName) {
     // Simplified drug classification
     const name = drugName.toLowerCase();
-    
+
     if (name.includes('mab')) return 'Monoclonal Antibody';
     if (name.includes('nib')) return 'Kinase Inhibitor';
     if (name.includes('statin')) return 'Statin';
     if (name.includes('pril')) return 'ACE Inhibitor';
     if (name.includes('sartan')) return 'ARB';
     if (name.includes('olol')) return 'Beta Blocker';
-    
+
     return 'Other';
   }
 
@@ -684,11 +684,11 @@ export class DrugGeneInteractionsClient {
    */
   identifyTherapeuticAreas(enrichedDrugs) {
     const areas = new Set();
-    
+
     enrichedDrugs.forEach(item => {
       // Simplified therapeutic area identification
       const drugClass = this.getDrugClass(item.drug);
-      
+
       if (['Kinase Inhibitor', 'Monoclonal Antibody'].includes(drugClass)) {
         areas.add('Oncology');
       }
@@ -696,7 +696,7 @@ export class DrugGeneInteractionsClient {
         areas.add('Cardiovascular');
       }
     });
-    
+
     return Array.from(areas);
   }
 
@@ -705,20 +705,20 @@ export class DrugGeneInteractionsClient {
    */
   generatePharmacologicalRecommendations(enrichedDrugs) {
     const recommendations = [];
-    
+
     if (enrichedDrugs.length > 0) {
       recommendations.push(`${enrichedDrugs.length} drugs show significant enrichment`);
-      
+
       const topDrug = enrichedDrugs[0];
       if (topDrug) {
         recommendations.push(`${topDrug.drug} targets ${topDrug.targetCount} genes in your list`);
       }
-      
+
       if (enrichedDrugs.some(d => d.adjustedPValue < 0.01)) {
         recommendations.push('Strong statistical evidence for drug-target enrichment');
       }
     }
-    
+
     return recommendations;
   }
 }

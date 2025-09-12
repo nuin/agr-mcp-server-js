@@ -1,6 +1,6 @@
 /**
  * Variant Analysis Module
- * 
+ *
  * Provides clinical variant interpretation using ClinVar, gnomAD, and VEP
  * for understanding the functional and clinical significance of genetic variants.
  */
@@ -26,25 +26,25 @@ export class VariantAnalysisClient {
     this.tool = options.tool || 'AGR-Variant-Analysis';
     this.timeout = options.timeout || 30000;
     this.cache = new NodeCache({ stdTTL: CACHE_TTL });
-    
+
     // Create axios instances
     this.ncbiClient = axios.create({
       baseURL: CLINVAR_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.myvariantClient = axios.create({
       baseURL: MYVARIANT_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.ensemblClient = axios.create({
       baseURL: VEP_API,
       timeout: this.timeout,
-      headers: { 
-        'Accept': 'application/json',
+      headers: {
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       }
     });
@@ -85,7 +85,7 @@ export class VariantAnalysisClient {
 
     try {
       const results = {
-        variant: variant,
+        variant,
         summary: {},
         clinical: null,
         population: null,
@@ -100,7 +100,7 @@ export class VariantAnalysisClient {
 
       // Fetch data in parallel
       const promises = [];
-      
+
       if (includeClinical) {
         promises.push(this.getClinicalSignificance(variant));
       }
@@ -132,7 +132,7 @@ export class VariantAnalysisClient {
 
       // Generate interpretation
       results.interpretation = this.interpretVariant(results);
-      
+
       // Generate summary
       results.summary = this.generateVariantSummary(results);
 
@@ -254,7 +254,7 @@ export class VariantAnalysisClient {
   async getPopulationFrequency(variantInfo) {
     try {
       let queryString = variantInfo.original;
-      
+
       // Build appropriate query
       if (variantInfo.type === 'vcf') {
         queryString = `chr${variantInfo.chromosome}:g.${variantInfo.position}${variantInfo.ref}>${variantInfo.alt}`;
@@ -279,7 +279,7 @@ export class VariantAnalysisClient {
       // Extract frequencies
       const gnomadGenome = hit.gnomad_genome || {};
       const gnomadExome = hit.gnomad_exome || {};
-      
+
       return {
         rsid: hit.dbsnp?.rsid || null,
         gnomAD: {
@@ -315,12 +315,12 @@ export class VariantAnalysisClient {
     try {
       // Query Ensembl VEP
       const response = await axios.post(
-        `https://rest.ensembl.org/vep/human/hgvs`,
+        'https://rest.ensembl.org/vep/human/hgvs',
         { hgvs_notations: [variant] },
         {
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            Accept: 'application/json'
           },
           timeout: this.timeout
         }
@@ -465,8 +465,8 @@ export class VariantAnalysisClient {
     const classification = this.calculateACMGClassification(evidence);
 
     return {
-      classification: classification,
-      evidence: evidence,
+      classification,
+      evidence,
       confidenceLevel: this.calculateConfidence(evidence),
       recommendations: this.generateRecommendations(classification, evidence)
     };
@@ -484,16 +484,16 @@ export class VariantAnalysisClient {
       return 'Benign';
     }
 
-    if (pathogenicPoints.veryStrong >= 1 && 
-        (pathogenicPoints.strong >= 1 || pathogenicPoints.moderate >= 2 || 
-         (pathogenicPoints.moderate >= 1 && pathogenicPoints.supporting >= 1) ||
-         pathogenicPoints.supporting >= 2)) {
+    if (pathogenicPoints.veryStrong >= 1
+        && (pathogenicPoints.strong >= 1 || pathogenicPoints.moderate >= 2
+         || (pathogenicPoints.moderate >= 1 && pathogenicPoints.supporting >= 1)
+         || pathogenicPoints.supporting >= 2)) {
       return 'Pathogenic';
     }
 
-    if (pathogenicPoints.strong >= 2 ||
-        (pathogenicPoints.strong >= 1 && pathogenicPoints.moderate >= 1) ||
-        (pathogenicPoints.strong >= 1 && pathogenicPoints.supporting >= 2)) {
+    if (pathogenicPoints.strong >= 2
+        || (pathogenicPoints.strong >= 1 && pathogenicPoints.moderate >= 1)
+        || (pathogenicPoints.strong >= 1 && pathogenicPoints.supporting >= 2)) {
       return 'Likely pathogenic';
     }
 
@@ -526,12 +526,12 @@ export class VariantAnalysisClient {
    */
   parseConditions(traitSet) {
     if (!traitSet) return [];
-    
+
     // Parse trait set string
     if (typeof traitSet === 'string') {
       return traitSet.split('|').map(t => t.trim());
     }
-    
+
     return [];
   }
 
@@ -545,7 +545,7 @@ export class VariantAnalysisClient {
       'criteria provided, multiple submitters, no conflicts': 2,
       'criteria provided, single submitter': 1
     };
-    
+
     return statusMap[reviewStatus?.toLowerCase()] || 0;
   }
 
@@ -554,7 +554,7 @@ export class VariantAnalysisClient {
    */
   extractPopulationFrequencies(genome, exome) {
     const populations = {};
-    
+
     // Process genome data
     if (genome.af) {
       Object.keys(genome.af).forEach(pop => {
@@ -566,7 +566,7 @@ export class VariantAnalysisClient {
         }
       });
     }
-    
+
     return populations;
   }
 
@@ -575,7 +575,7 @@ export class VariantAnalysisClient {
    */
   calculateMaxPopAF(genome, exome) {
     let maxAF = 0;
-    
+
     if (genome.af) {
       Object.values(genome.af).forEach(af => {
         if (typeof af === 'number' && af > maxAF) {
@@ -583,7 +583,7 @@ export class VariantAnalysisClient {
         }
       });
     }
-    
+
     if (exome.af) {
       Object.values(exome.af).forEach(af => {
         if (typeof af === 'number' && af > maxAF) {
@@ -591,7 +591,7 @@ export class VariantAnalysisClient {
         }
       });
     }
-    
+
     return maxAF;
   }
 
@@ -602,7 +602,7 @@ export class VariantAnalysisClient {
     const genomeAF = genome.af?.af || 0;
     const exomeAF = exome.af?.af || 0;
     const maxAF = Math.max(genomeAF, exomeAF);
-    
+
     return maxAF < 0.01; // Less than 1%
   }
 
@@ -616,7 +616,7 @@ export class VariantAnalysisClient {
       low: [],
       modifier: []
     };
-    
+
     consequences.forEach(c => {
       const impact = c.impact?.toLowerCase();
       if (impact && impacts[impact]) {
@@ -626,7 +626,7 @@ export class VariantAnalysisClient {
         });
       }
     });
-    
+
     return impacts;
   }
 
@@ -676,20 +676,20 @@ export class VariantAnalysisClient {
   generateConsensus(dbnsfp) {
     let pathogenic = 0;
     let benign = 0;
-    
+
     // Check each predictor
     if (dbnsfp.sift?.score < 0.05) pathogenic++;
     else if (dbnsfp.sift?.score !== undefined) benign++;
-    
+
     if (dbnsfp.polyphen2?.hdiv?.score >= 0.446) pathogenic++;
     else if (dbnsfp.polyphen2?.hdiv?.score !== undefined) benign++;
-    
+
     if (dbnsfp.cadd?.phred >= 20) pathogenic++;
     else if (dbnsfp.cadd?.phred !== undefined) benign++;
-    
+
     if (dbnsfp.revel?.score >= 0.5) pathogenic++;
     else if (dbnsfp.revel?.score !== undefined) benign++;
-    
+
     return {
       pathogenic,
       benign,
@@ -704,8 +704,8 @@ export class VariantAnalysisClient {
     return {
       classification: results.interpretation?.classification || 'Unknown',
       clinicalSignificance: results.clinical?.significance || 'Not available',
-      populationFrequency: results.population?.maxPopulationAF 
-        ? `${(results.population.maxPopulationAF * 100).toFixed(4)}%` 
+      populationFrequency: results.population?.maxPopulationAF
+        ? `${(results.population.maxPopulationAF * 100).toFixed(4)}%`
         : 'Not found',
       functionalImpact: results.functional?.mostSevereConsequence || 'Unknown',
       predictionConsensus: results.predictions?.consensus?.verdict || 'No predictions',
@@ -720,7 +720,7 @@ export class VariantAnalysisClient {
    */
   calculateConfidence(evidence) {
     const totalEvidence = evidence.pathogenic.length + evidence.benign.length;
-    
+
     if (totalEvidence >= 5) return 'High';
     if (totalEvidence >= 3) return 'Moderate';
     if (totalEvidence >= 1) return 'Low';
@@ -732,24 +732,24 @@ export class VariantAnalysisClient {
    */
   generateRecommendations(classification, evidence) {
     const recommendations = [];
-    
+
     if (classification === 'Uncertain significance') {
       recommendations.push('Consider additional functional studies');
       recommendations.push('Check for segregation in family members');
       recommendations.push('Review updated population databases');
     }
-    
+
     if (classification.includes('pathogenic')) {
       recommendations.push('Clinical correlation recommended');
       recommendations.push('Consider genetic counseling');
       recommendations.push('Screen family members if appropriate');
     }
-    
+
     if (evidence.pathogenic.length === 0 && evidence.benign.length === 0) {
       recommendations.push('Insufficient evidence for classification');
       recommendations.push('Additional data sources needed');
     }
-    
+
     return recommendations;
   }
 }

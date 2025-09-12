@@ -2,17 +2,17 @@
 
 /**
  * Literature Mining Module - PubMed Integration
- * 
+ *
  * Provides scientific literature search and analysis capabilities
  * for gene-related research using NCBI's E-utilities API.
- * 
+ *
  * Features:
  * - PubMed literature search
  * - Gene mention extraction
  * - Citation analysis
  * - Research trend tracking
  * - Abstract summarization
- * 
+ *
  * @author Scientific Features Team
  * @version 1.0.0
  */
@@ -61,7 +61,7 @@ export class LiteratureMiningClient {
 
     // Build search query
     let query = `"${geneSymbol}"[Gene Name]`;
-    
+
     // Add additional keywords
     if (keywords.length > 0) {
       const keywordQuery = keywords.map(k => `"${k}"`).join(' AND ');
@@ -93,7 +93,7 @@ export class LiteratureMiningClient {
 
       if (pmids.length === 0) {
         return {
-          query: query,
+          query,
           total: 0,
           papers: [],
           summary: 'No literature found for the specified criteria'
@@ -107,7 +107,7 @@ export class LiteratureMiningClient {
       const analyzedPapers = this.analyzePapers(papers, geneSymbol);
 
       return {
-        query: query,
+        query,
         total: parseInt(searchData.esearchresult.count),
         returned: pmids.length,
         papers: analyzedPapers,
@@ -145,13 +145,13 @@ export class LiteratureMiningClient {
         const paperData = summaryData.result[pmid];
         if (paperData && paperData.title) {
           papers.push({
-            pmid: pmid,
+            pmid,
             title: paperData.title,
             authors: this.formatAuthors(paperData.authors),
             journal: paperData.fulljournalname || paperData.source,
             date: paperData.pubdate,
-            doi: paperData.elocationid?.startsWith('doi:') ? 
-                  paperData.elocationid.replace('doi:', '') : null,
+            doi: paperData.elocationid?.startsWith('doi:')
+              ? paperData.elocationid.replace('doi:', '') : null,
             abstract: null, // Will be fetched separately if needed
             citedBy: null,
             url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
@@ -189,11 +189,11 @@ export class LiteratureMiningClient {
       // Parse XML to extract abstracts (simplified)
       const abstracts = {};
       const xmlText = fetchResponse.data;
-      
+
       // Basic XML parsing for abstracts
       const pmidRegex = /<PMID[^>]*>(\d+)<\/PMID>/g;
       const abstractRegex = /<AbstractText[^>]*>(.*?)<\/AbstractText>/gs;
-      
+
       let pmidMatch;
       const pmidOrder = [];
       while ((pmidMatch = pmidRegex.exec(xmlText)) !== null) {
@@ -209,7 +209,7 @@ export class LiteratureMiningClient {
           .replace(/&gt;/g, '>')
           .replace(/&amp;/g, '&')
           .trim();
-        
+
         abstracts[pmidOrder[abstractIndex]] = cleanAbstract;
         abstractIndex++;
       }
@@ -229,36 +229,36 @@ export class LiteratureMiningClient {
    */
   analyzePapers(papers, geneSymbol) {
     const currentYear = new Date().getFullYear();
-    
+
     return papers.map(paper => {
       // Calculate relevance score based on:
       // 1. Gene mention in title (high weight)
       // 2. Recent publication (medium weight)
       // 3. Journal quality proxy (low weight)
-      
+
       let relevanceScore = 0;
       const title = paper.title.toLowerCase();
       const gene = geneSymbol.toLowerCase();
-      
+
       // Gene mention in title
       if (title.includes(gene)) {
         relevanceScore += 10;
       }
-      
+
       // Recency bonus
       const pubYear = this.extractYear(paper.date);
       if (pubYear) {
         const yearDiff = currentYear - pubYear;
         relevanceScore += Math.max(0, 5 - (yearDiff * 0.5));
       }
-      
+
       // Journal quality proxy (based on common high-impact journals)
       const highImpactJournals = ['nature', 'science', 'cell', 'nejm', 'jama', 'lancet'];
       const journal = (paper.journal || '').toLowerCase();
       if (highImpactJournals.some(j => journal.includes(j))) {
         relevanceScore += 3;
       }
-      
+
       return {
         ...paper,
         relevanceScore: Math.round(relevanceScore * 10) / 10,
@@ -292,11 +292,11 @@ export class LiteratureMiningClient {
 
       Object.values(abstracts).forEach(abstract => {
         if (!abstract) return;
-        
+
         const genes = [...abstract.matchAll(commonGenePattern)]
           .map(match => match[1])
           .filter(gene => gene !== geneSymbol && gene.length <= 10);
-        
+
         genes.forEach(gene => {
           geneCoOccurrences[gene] = (geneCoOccurrences[gene] || 0) + 1;
         });
@@ -305,7 +305,7 @@ export class LiteratureMiningClient {
       // Filter and rank co-occurring genes
       const relatedGenes = Object.entries(geneCoOccurrences)
         .filter(([gene, count]) => count >= minCoOccurrence)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, maxGenes)
         .map(([gene, coOccurrences]) => ({
           gene,
@@ -340,7 +340,7 @@ export class LiteratureMiningClient {
       // Analyze publication trends in 2-year windows
       for (let year = startYear; year <= endYear; year += 2) {
         const windowEnd = Math.min(year + 1, endYear);
-        
+
         const result = await this.searchLiterature(geneSymbol, {
           dateRange: { startYear: year, endYear: windowEnd },
           maxResults: 1 // We only need the count
@@ -361,7 +361,7 @@ export class LiteratureMiningClient {
       const totalPublications = trends.reduce((sum, t) => sum + t.publications, 0);
       const recentYears = trends.slice(-3); // Last 6 years
       const recentPublications = recentYears.reduce((sum, t) => sum + t.publications, 0);
-      
+
       const trendDirection = this.calculateTrendDirection(trends);
 
       return {
@@ -384,7 +384,7 @@ export class LiteratureMiningClient {
    */
   formatAuthors(authors) {
     if (!authors || authors.length === 0) return 'Unknown authors';
-    
+
     if (authors.length <= 3) {
       return authors.map(a => a.name).join(', ');
     } else {
@@ -406,15 +406,15 @@ export class LiteratureMiningClient {
    */
   calculateTrendDirection(trends) {
     if (trends.length < 3) return 'insufficient data';
-    
+
     const recentTrend = trends.slice(-3);
     const earlyTrend = trends.slice(0, 3);
-    
+
     const recentAvg = recentTrend.reduce((sum, t) => sum + t.publications, 0) / recentTrend.length;
     const earlyAvg = earlyTrend.reduce((sum, t) => sum + t.publications, 0) / earlyTrend.length;
-    
+
     const changePercent = ((recentAvg - earlyAvg) / Math.max(earlyAvg, 1)) * 100;
-    
+
     if (changePercent > 20) return 'increasing';
     if (changePercent < -20) return 'decreasing';
     return 'stable';

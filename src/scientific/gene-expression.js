@@ -1,6 +1,6 @@
 /**
  * Gene Expression Heatmaps Module
- * 
+ *
  * Provides tissue-specific and cell-type-specific gene expression data
  * with visualization-ready heatmap generation from GTEx, HPA, and other sources.
  */
@@ -24,46 +24,46 @@ export class GeneExpressionClient {
   constructor(options = {}) {
     this.timeout = options.timeout || 30000;
     this.cache = new NodeCache({ stdTTL: CACHE_TTL });
-    
+
     // Create axios instances
     this.gtexClient = axios.create({
       baseURL: GTEX_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.hpaClient = axios.create({
       baseURL: HPA_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
-    
+
     this.atlasClient = axios.create({
       baseURL: EXPRESSION_ATLAS_API,
       timeout: this.timeout,
-      headers: { 'Accept': 'application/json' }
+      headers: { Accept: 'application/json' }
     });
 
     // Expression level categories
     this.expressionLevels = {
-      'not_detected': { min: 0, max: 0.1, color: '#f0f0f0', label: 'Not detected' },
-      'low': { min: 0.1, max: 1, color: '#ffffcc', label: 'Low' },
-      'medium': { min: 1, max: 10, color: '#fed976', label: 'Medium' },
-      'high': { min: 10, max: 100, color: '#fd8d3c', label: 'High' },
-      'very_high': { min: 100, max: Infinity, color: '#e31a1c', label: 'Very high' }
+      not_detected: { min: 0, max: 0.1, color: '#f0f0f0', label: 'Not detected' },
+      low: { min: 0.1, max: 1, color: '#ffffcc', label: 'Low' },
+      medium: { min: 1, max: 10, color: '#fed976', label: 'Medium' },
+      high: { min: 10, max: 100, color: '#fd8d3c', label: 'High' },
+      very_high: { min: 100, max: Infinity, color: '#e31a1c', label: 'Very high' }
     };
 
     // Tissue categories for organization
     this.tissueCategories = {
-      'nervous': ['brain', 'nerve', 'spinal', 'cortex', 'cerebral', 'hypothalamus'],
-      'cardiovascular': ['heart', 'artery', 'aorta', 'coronary'],
-      'digestive': ['liver', 'stomach', 'intestine', 'colon', 'pancreas'],
-      'respiratory': ['lung', 'bronchus', 'trachea'],
-      'reproductive': ['testis', 'ovary', 'uterus', 'prostate', 'breast'],
-      'musculoskeletal': ['muscle', 'bone', 'cartilage', 'tendon'],
-      'immune': ['spleen', 'thymus', 'lymph', 'tonsil'],
-      'endocrine': ['thyroid', 'adrenal', 'pituitary'],
-      'other': []
+      nervous: ['brain', 'nerve', 'spinal', 'cortex', 'cerebral', 'hypothalamus'],
+      cardiovascular: ['heart', 'artery', 'aorta', 'coronary'],
+      digestive: ['liver', 'stomach', 'intestine', 'colon', 'pancreas'],
+      respiratory: ['lung', 'bronchus', 'trachea'],
+      reproductive: ['testis', 'ovary', 'uterus', 'prostate', 'breast'],
+      musculoskeletal: ['muscle', 'bone', 'cartilage', 'tendon'],
+      immune: ['spleen', 'thymus', 'lymph', 'tonsil'],
+      endocrine: ['thyroid', 'adrenal', 'pituitary'],
+      other: []
     };
   }
 
@@ -100,7 +100,7 @@ export class GeneExpressionClient {
 
       // Fetch expression data from multiple sources
       const promises = [];
-      
+
       if (dataSources.includes('gtex')) {
         promises.push(this.getGTExExpression(geneList));
       }
@@ -109,7 +109,7 @@ export class GeneExpressionClient {
       }
 
       const expressionData = await Promise.allSettled(promises);
-      
+
       // Merge expression data
       const mergedData = this.mergeExpressionData(expressionData, dataSources);
       results.expressionMatrix = mergedData.matrix;
@@ -119,7 +119,7 @@ export class GeneExpressionClient {
       if (tissueFilter !== 'all') {
         results.tissues = this.filterTissues(results.tissues, tissueFilter);
         results.expressionMatrix = this.filterExpressionMatrix(
-          results.expressionMatrix, 
+          results.expressionMatrix,
           results.tissues
         );
       }
@@ -152,10 +152,10 @@ export class GeneExpressionClient {
   async getGTExExpression(genes) {
     try {
       const expressionData = {};
-      
+
       for (const gene of genes) {
         const response = await axios.get(
-          `https://gtexportal.org/rest/v1/expression/medianGeneExpression`,
+          'https://gtexportal.org/rest/v1/expression/medianGeneExpression',
           {
             params: {
               gencodeId: gene,
@@ -193,10 +193,10 @@ export class GeneExpressionClient {
   async getHPAExpression(genes) {
     try {
       const expressionData = {};
-      
+
       for (const gene of genes) {
         const response = await axios.get(
-          `https://www.proteinatlas.org/api/search_download.php`,
+          'https://www.proteinatlas.org/api/search_download.php',
           {
             params: {
               search: gene,
@@ -274,10 +274,10 @@ export class GeneExpressionClient {
           condition2Genes
         );
 
-        if (Math.abs(diff.logFoldChange) >= logFoldChangeThreshold && 
-            diff.adjustedPValue <= fdrThreshold) {
+        if (Math.abs(diff.logFoldChange) >= logFoldChangeThreshold
+            && diff.adjustedPValue <= fdrThreshold) {
           results.differentialGenes.push({
-            tissue: tissue,
+            tissue,
             logFoldChange: diff.logFoldChange,
             pValue: diff.pValue,
             adjustedPValue: diff.adjustedPValue,
@@ -323,7 +323,7 @@ export class GeneExpressionClient {
     try {
       const expression = await this.getExpressionHeatmap(genes);
       const results = {
-        genes: genes,
+        genes,
         tissueSpecific: [],
         ubiquitous: [],
         notExpressed: [],
@@ -333,7 +333,7 @@ export class GeneExpressionClient {
       genes.forEach(gene => {
         const geneExpr = expression.expressionMatrix[gene] || {};
         const values = Object.values(geneExpr);
-        
+
         if (values.length === 0) {
           results.notExpressed.push(gene);
           return;
@@ -346,17 +346,17 @@ export class GeneExpressionClient {
         if (tau >= threshold) {
           const maxTissue = Object.entries(geneExpr)
             .reduce((a, b) => a[1] > b[1] ? a : b)[0];
-          
+
           results.tissueSpecific.push({
-            gene: gene,
-            tau: tau,
+            gene,
+            tau,
             preferredTissue: maxTissue,
             maxExpression: Math.max(...values)
           });
         } else if (tau < 0.3) {
           results.ubiquitous.push({
-            gene: gene,
-            tau: tau,
+            gene,
+            tau,
             meanExpression: values.reduce((a, b) => a + b, 0) / values.length
           });
         }
@@ -378,15 +378,15 @@ export class GeneExpressionClient {
    */
   mergeExpressionData(expressionData, sources) {
     const merged = { matrix: {}, tissues: new Set() };
-    
+
     expressionData.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         const { data, tissues } = result.value;
         const source = sources[index];
-        
+
         Object.keys(data).forEach(gene => {
           if (!merged.matrix[gene]) merged.matrix[gene] = {};
-          
+
           Object.keys(data[gene]).forEach(tissue => {
             const tissueKey = `${tissue}_${source}`;
             merged.matrix[gene][tissueKey] = data[gene][tissue];
@@ -395,7 +395,7 @@ export class GeneExpressionClient {
         });
       }
     });
-    
+
     return {
       matrix: merged.matrix,
       tissues: Array.from(merged.tissues).sort()
@@ -408,9 +408,9 @@ export class GeneExpressionClient {
   convertHPALevel(level) {
     const levelMap = {
       'Not detected': 0,
-      'Low': 1,
-      'Medium': 5,
-      'High': 15
+      Low: 1,
+      Medium: 5,
+      High: 15
     };
     return levelMap[level] || 0;
   }
@@ -451,23 +451,23 @@ export class GeneExpressionClient {
   filterTissues(tissues, filter) {
     if (typeof filter === 'string') {
       if (this.tissueCategories[filter]) {
-        return tissues.filter(tissue => 
-          this.tissueCategories[filter].some(keyword => 
+        return tissues.filter(tissue =>
+          this.tissueCategories[filter].some(keyword =>
             tissue.toLowerCase().includes(keyword.toLowerCase())
           )
         );
       }
-      return tissues.filter(tissue => 
+      return tissues.filter(tissue =>
         tissue.toLowerCase().includes(filter.toLowerCase())
       );
     }
-    
+
     if (Array.isArray(filter)) {
-      return tissues.filter(tissue => 
+      return tissues.filter(tissue =>
         filter.some(f => tissue.toLowerCase().includes(f.toLowerCase()))
       );
     }
-    
+
     return tissues;
   }
 
@@ -476,7 +476,7 @@ export class GeneExpressionClient {
    */
   filterExpressionMatrix(matrix, allowedTissues) {
     const filtered = {};
-    
+
     Object.keys(matrix).forEach(gene => {
       filtered[gene] = {};
       Object.keys(matrix[gene]).forEach(tissue => {
@@ -485,7 +485,7 @@ export class GeneExpressionClient {
         }
       });
     });
-    
+
     return filtered;
   }
 
@@ -501,10 +501,10 @@ export class GeneExpressionClient {
       maxExpression: 0,
       expressionDistribution: {}
     };
-    
-    let allValues = [];
-    let tissueSet = new Set();
-    
+
+    const allValues = [];
+    const tissueSet = new Set();
+
     Object.values(matrix).forEach(geneData => {
       Object.keys(geneData).forEach(tissue => {
         tissueSet.add(tissue);
@@ -513,19 +513,19 @@ export class GeneExpressionClient {
         stats.maxExpression = Math.max(stats.maxExpression, value);
       });
     });
-    
+
     stats.tissues = tissueSet.size;
     stats.totalDataPoints = allValues.length;
     stats.meanExpression = allValues.reduce((a, b) => a + b, 0) / allValues.length;
-    
+
     // Expression level distribution
     Object.keys(this.expressionLevels).forEach(level => {
       const range = this.expressionLevels[level];
-      stats.expressionDistribution[level] = allValues.filter(v => 
+      stats.expressionDistribution[level] = allValues.filter(v =>
         v >= range.min && v < range.max
       ).length;
     });
-    
+
     return stats;
   }
 
@@ -534,7 +534,7 @@ export class GeneExpressionClient {
    */
   generateHeatmapData(matrix, tissues, genes, options) {
     const { normalization, minExpression } = options;
-    
+
     const heatmap = {
       rows: genes,
       columns: tissues,
@@ -542,34 +542,34 @@ export class GeneExpressionClient {
       colorScale: this.generateColorScale(),
       clustering: this.calculateClustering(matrix, genes, tissues)
     };
-    
+
     // Generate heatmap matrix
     genes.forEach((gene, geneIndex) => {
       tissues.forEach((tissue, tissueIndex) => {
         let value = matrix[gene]?.[tissue] || 0;
-        
+
         // Apply normalization
         if (normalization === 'log2') {
           value = value > 0 ? Math.log2(value + 1) : 0;
         } else if (normalization === 'zscore') {
           value = this.calculateZScore(value, matrix, gene);
         }
-        
+
         // Apply minimum threshold
         if (value < minExpression) value = 0;
-        
+
         heatmap.data.push({
           row: geneIndex,
           col: tissueIndex,
-          value: value,
-          gene: gene,
-          tissue: tissue,
+          value,
+          gene,
+          tissue,
           originalValue: matrix[gene]?.[tissue] || 0,
           level: this.categorizeExpressionLevel(value)
         });
       });
     });
-    
+
     return heatmap;
   }
 
@@ -595,7 +595,7 @@ export class GeneExpressionClient {
     // Simplified hierarchical clustering
     const geneClusters = this.clusterGenes(matrix, genes);
     const tissueClusters = this.clusterTissues(matrix, tissues, genes);
-    
+
     return {
       genes: geneClusters,
       tissues: tissueClusters,
@@ -609,15 +609,15 @@ export class GeneExpressionClient {
    */
   clusterGenes(matrix, genes) {
     const clusters = [];
-    
+
     genes.forEach((gene, index) => {
       clusters.push({
-        gene: gene,
-        index: index,
+        gene,
+        index,
         cluster: Math.floor(index / 5) // Simplified clustering
       });
     });
-    
+
     return clusters;
   }
 
@@ -626,16 +626,16 @@ export class GeneExpressionClient {
    */
   clusterTissues(matrix, tissues, genes) {
     const clusters = [];
-    
+
     tissues.forEach((tissue, index) => {
       const category = this.categorizeTissue(tissue);
       clusters.push({
-        tissue: tissue,
-        index: index,
-        category: category
+        tissue,
+        index,
+        category
       });
     });
-    
+
     return clusters;
   }
 
@@ -644,13 +644,13 @@ export class GeneExpressionClient {
    */
   categorizeTissue(tissue) {
     const tissueLower = tissue.toLowerCase();
-    
+
     for (const [category, keywords] of Object.entries(this.tissueCategories)) {
       if (keywords.some(keyword => tissueLower.includes(keyword))) {
         return category;
       }
     }
-    
+
     return 'other';
   }
 
@@ -663,7 +663,7 @@ export class GeneExpressionClient {
     const std = Math.sqrt(
       geneValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / geneValues.length
     );
-    
+
     return std > 0 ? (value - mean) / std : 0;
   }
 
@@ -685,13 +685,13 @@ export class GeneExpressionClient {
   calculateTissueDifference(matrix1, matrix2, tissue, genes1, genes2) {
     const values1 = genes1.map(g => matrix1[g]?.[tissue] || 0);
     const values2 = genes2.map(g => matrix2[g]?.[tissue] || 0);
-    
+
     const mean1 = values1.reduce((a, b) => a + b, 0) / values1.length;
     const mean2 = values2.reduce((a, b) => a + b, 0) / values2.length;
-    
+
     const logFoldChange = Math.log2((mean2 + 1) / (mean1 + 1));
     const pValue = this.calculateTTest(values1, values2);
-    
+
     return {
       logFoldChange,
       pValue,
@@ -707,18 +707,18 @@ export class GeneExpressionClient {
   calculateTTest(values1, values2) {
     const n1 = values1.length;
     const n2 = values2.length;
-    
+
     const mean1 = values1.reduce((a, b) => a + b, 0) / n1;
     const mean2 = values2.reduce((a, b) => a + b, 0) / n2;
-    
+
     const var1 = values1.reduce((a, b) => a + Math.pow(b - mean1, 2), 0) / (n1 - 1);
     const var2 = values2.reduce((a, b) => a + Math.pow(b - mean2, 2), 0) / (n2 - 1);
-    
+
     const pooledVar = ((n1 - 1) * var1 + (n2 - 1) * var2) / (n1 + n2 - 2);
-    const se = Math.sqrt(pooledVar * (1/n1 + 1/n2));
-    
+    const se = Math.sqrt(pooledVar * (1 / n1 + 1 / n2));
+
     const t = Math.abs(mean1 - mean2) / se;
-    
+
     // Simplified p-value approximation
     return Math.exp(-t * t / 2);
   }
@@ -728,13 +728,13 @@ export class GeneExpressionClient {
    */
   calculateTau(values) {
     if (values.length <= 1) return 0;
-    
+
     const max = Math.max(...values);
     if (max === 0) return 0;
-    
+
     const normalizedValues = values.map(v => v / max);
     const sum = normalizedValues.reduce((a, b) => a + (1 - b), 0);
-    
+
     return sum / (values.length - 1);
   }
 
