@@ -2,8 +2,8 @@
   "mcpServers": {
     "genomics": {
       "command": "node",
-      "args": ["/Users/nuin/Projects/agr/agr-mcp-server-js/src/agr-server-simple-natural.js"],
-      "cwd": "/Users/nuin/Projects/agr/agr-mcp-server-js",
+      "args": ["/FULL/PATH/TO/agr-mcp-server-js/src/agr-server-simple-natural.js"],
+      "cwd": "/FULL/PATH/TO/agr-mcp-server-js",
       "env": {
         "LOG_LEVEL": "info"
       }
