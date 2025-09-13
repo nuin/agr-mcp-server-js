@@ -9,14 +9,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Install globally from npm
 npm install -g agr-mcp-server-enhanced
 
-# Start the server
-agr-mcp-server
+# Available global commands:
+agr-mcp-server       # Main MCP server with all 27 genomics tools
+agr-mcp-natural      # Standalone NLP server (TRUE semantic understanding)
+alliance             # Interactive CLI for natural language queries
+agr-chat             # Chat interface for genomics questions
 
-# Or use the natural language server
-agr-mcp-natural
-
-# Or start interactive chat
-agr-chat
+# Start the appropriate server based on your needs:
+agr-mcp-server       # For Claude Code integration (recommended)
 ```
 
 ### Option 2: From Source
@@ -81,6 +81,33 @@ This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in
 
 The server now includes comprehensive scientific analysis modules providing cutting-edge genomics capabilities:
 
+### 🧠 TRUE Natural Language Processing (Revolutionary!)
+- **Semantic Understanding**: TRUE subject-predicate-object parsing vs keyword matching
+- **Intent Detection**: Understands what users want to accomplish
+- **Entity Extraction**: Identifies genes, species, diseases, and biological processes
+- **Context Awareness**: Maintains conversation history and resolves references
+- **Follow-up Questions**: Contextual follow-ups that understand previous queries
+- **Biological Reasoning**: Infers relationships and biological contexts
+- **Query Explanation**: Shows how the system understood and processed queries
+
+**Example Semantic Understanding:**
+- Query: "genes causing cancer in mice"
+- Understanding: Subject="genes", Predicate="cause", Object="cancer", Species="mice"
+- Intent: "SEARCH_CAUSAL_GENES" with disease context
+- Result: Targeted search for oncogenes in mouse models
+
+**Conversation Flow:**
+```
+User: "What genes are involved in diabetes?"
+NLP: Identifies diabetes-related genes with pathway context
+
+User: "Which are expressed in pancreatic cells?"
+NLP: Uses conversation history to filter previous results by tissue expression
+
+User: "Show drug interactions for the top 3"
+NLP: Takes top 3 genes from filtered results and finds drug interactions
+```
+
 ### 🧬 Variant Analysis
 - **ClinVar Integration**: Clinical significance and pathogenicity assessment
 - **gnomAD Integration**: Population frequency analysis across diverse populations
@@ -137,7 +164,7 @@ The server now includes comprehensive scientific analysis modules providing cutt
 - `scripts/`: Utility scripts for health checks, benchmarking, and demos
 - `config/claude-desktop-config.json`: Claude Desktop MCP configuration
 
-### Available MCP Tools (24 total)
+### Available MCP Tools (27 total)
 
 #### Core Genomics Tools
 1. `search_genes` - Gene search with species filtering
@@ -149,8 +176,29 @@ The server now includes comprehensive scientific analysis modules providing cutt
 7. `blast_sequence` - BLAST search with auto-detection
 
 #### Advanced Query Tools
-8. `complex_search` - Natural language queries with Boolean operators (AND, OR, NOT)
+8. `complex_search` - Boolean keyword queries with operators (AND, OR, NOT)
 9. `faceted_search` - Multi-dimensional filtering with aggregations
+
+#### TRUE Natural Language Processing Tools (NEW! 🧠)
+25. `process_natural_query` - **TRUE semantic understanding with intent detection and entity extraction**
+    - Parses natural language into subject-predicate-object structures
+    - Detects biological intent (search, analyze, compare, relate)
+    - Extracts entities (genes, species, diseases, processes)
+    - Generates contextually appropriate responses
+    - Example: "genes causing cancer in mice" → targeted oncogene search
+
+26. `continue_conversation` - **Context-aware follow-up questions with conversation history**
+    - Maintains conversation state across multiple queries
+    - Resolves pronouns and references ("which of these", "the top 3")
+    - Builds upon previous results intelligently
+    - Example: Follow "diabetes genes" with "expressed in pancreas"
+
+27. `explain_understanding` - **Show how NLP parsed and understood queries with semantic breakdown**
+    - Reveals semantic parsing steps
+    - Shows entity extraction results
+    - Explains intent detection reasoning
+    - Demonstrates biological context inference
+    - Educational tool for understanding AI processing
 
 #### Scientific Analysis Tools (NEW!)
 10. `analyze_variant` - **Comprehensive variant analysis with ClinVar, gnomAD, and VEP integration**
@@ -209,6 +257,13 @@ The server now includes comprehensive scientific analysis modules providing cutt
 
 ## Claude Code Installation & Usage
 
+### Understanding the Difference: Claude Code vs Claude Desktop
+
+**IMPORTANT**: This server works with **Claude Code** (the CLI tool), not Claude Desktop. The configuration paths and methods are different:
+
+- **Claude Code**: Uses MCP servers configured through command-line
+- **Claude Desktop**: Uses `claude_desktop_config.json` (different system)
+
 ### Option 1: npm Package Installation (Recommended)
 
 Install the AGR MCP server from npm:
@@ -226,20 +281,71 @@ npm install -g agr-mcp-server-enhanced
 
 **Configure Claude Code** with global installation:
 
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+**CRITICAL**: The `agr-mcp-server-enhanced` npm package includes these four binaries:
+- `agr-mcp-server` - Main server (24 genomics tools)
+- `agr-mcp-natural` - NLP-only server (3 TRUE semantic tools)  
+- `alliance` - Interactive CLI interface
+- `agr-chat` - Chat interface for genomics
 
+#### Standard Configuration (Main Server - 24 Genomics Tools)
 ```json
 {
   "mcpServers": {
     "agr-genomics": {
       "command": "agr-mcp-server",
       "env": {
+        "LOG_LEVEL": "info",
+        "API_TIMEOUT": "30000",
+        "CACHE_TTL": "300"
+      }
+    }
+  }
+}
+```
+
+#### NLP-Only Configuration (3 TRUE Semantic Tools)
+```json
+{
+  "mcpServers": {
+    "agr-nlp": {
+      "command": "agr-mcp-natural",
+      "env": {
         "LOG_LEVEL": "info"
       }
     }
   }
 }
+```
+
+#### Full-Featured Configuration (All 27 Tools Including TRUE NLP)
+**IMPORTANT**: This requires local source installation, not npm global installation.
+
+```json
+{
+  "mcpServers": {
+    "agr-genomics-full": {
+      "command": "node",
+      "args": ["/FULL/PATH/TO/agr-mcp-server-js/src/agr-server-enhanced.js"],
+      "cwd": "/FULL/PATH/TO/agr-mcp-server-js",
+      "env": {
+        "LOG_LEVEL": "info",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
+```
+
+**Get Your Path**:
+```bash
+# Clone and setup the repository first
+git clone https://github.com/nuin/agr-mcp-server-js.git
+cd agr-mcp-server-js
+npm run setup
+
+# Get absolute path for config
+pwd
+# Use this output in the config above
 ```
 
 ### Option 2: Local Development Setup
@@ -260,12 +366,32 @@ npm start
 
 **Configure Claude Code** for local setup:
 
+#### Development Configuration
 ```json
 {
   "mcpServers": {
-    "agr-genomics": {
+    "agr-genomics-dev": {
       "command": "node",
-      "args": ["/FULL/PATH/TO/agr-mcp-server-js/src/agr-server-enhanced.js"],
+      "args": ["--inspect", "/FULL/PATH/TO/agr-mcp-server-js/src/agr-server-enhanced.js"],
+      "cwd": "/FULL/PATH/TO/agr-mcp-server-js",
+      "env": {
+        "NODE_ENV": "development",
+        "LOG_LEVEL": "debug",
+        "API_TIMEOUT": "60000",
+        "CACHE_TTL": "60"
+      }
+    }
+  }
+}
+```
+
+#### Standalone NLP Server Configuration
+```json
+{
+  "mcpServers": {
+    "agr-nlp-standalone": {
+      "command": "node",
+      "args": ["/FULL/PATH/TO/agr-mcp-server-js/src/nlp-standalone-server.js"],
       "cwd": "/FULL/PATH/TO/agr-mcp-server-js",
       "env": {
         "LOG_LEVEL": "info"
@@ -284,12 +410,49 @@ pwd
 
 ### Verification & Usage
 
-After setup, restart Claude Code completely and verify with these queries:
+After setup, **restart Claude Code completely** and verify with these queries:
 
+#### Basic Genomics Queries
 - "Search for BRCA1 genes"
 - "Find genes related to insulin"  
 - "Get detailed information about HGNC:1100"
 - "Show me cache statistics"
+
+#### TRUE NLP Queries (Revolutionary Semantic Understanding!)
+- "What genes interact with BRCA1 in DNA repair pathways?"
+  - **Semantic Parse**: Subject="genes", Predicate="interact", Object="BRCA1", Context="DNA repair"
+  - **Intent**: FIND_INTERACTING_GENES with pathway filtering
+  - **Result**: Targeted search of DNA repair network around BRCA1
+
+- "Show me genes that regulate cell division but exclude p53"
+  - **Semantic Parse**: Subject="genes", Predicate="regulate", Object="cell division", Negation="p53"
+  - **Intent**: SEARCH_REGULATORY_GENES with exclusion filter
+  - **Result**: Cell cycle genes minus TP53 and variants
+
+- "Find genes involved in immune response that are expressed in T cells"
+  - **Semantic Parse**: Subject="genes", Predicate="involved in", Object="immune response", Tissue="T cells"
+  - **Intent**: SEARCH_PATHWAY_GENES with tissue expression filter
+  - **Result**: Immune pathway genes with T cell expression data
+
+- "Explain how you understand: genes causing cancer in mice"
+  - **Educational Query**: Shows complete semantic breakdown
+  - **Result**: Reveals AI reasoning process step-by-step
+
+#### Conversation Flow Demonstration (Context-Aware AI)
+**Query 1**: "What genes are involved in diabetes?"
+- **NLP Processing**: Identifies diabetes → metabolic disease → gene associations
+- **Result**: Returns diabetes-associated genes with pathway context
+- **Conversation ID**: Generated for follow-up tracking
+
+**Query 2**: "Which of these are expressed in pancreatic cells?"
+- **Context Resolution**: "these" → refers to diabetes genes from Query 1
+- **NLP Processing**: Filters previous results by pancreatic expression
+- **Result**: Tissue-specific subset of diabetes genes
+
+**Query 3**: "Show drug interactions for the top 3"
+- **Context Resolution**: "top 3" → highest-scoring genes from Query 2 results
+- **NLP Processing**: Takes top 3 genes → searches drug interaction databases
+- **Result**: Pharmacological data for pancreatic diabetes genes
 
 ## Real Usage Examples
 
@@ -386,13 +549,71 @@ npm run query complex "apoptosis genes NOT p53 in zebrafish"
 
 ### Troubleshooting
 
-If the MCP server isn't working:
+#### Common Issues and Solutions
 
-1. **Check server starts manually**: `cd /path/to/project && npm start`
-2. **Verify Node.js version**: `node --version` (needs 18+)
-3. **Check config file syntax**: Ensure JSON is valid
-4. **Check logs**: Look for error messages when Claude Code starts
-5. **Verify paths**: Ensure all paths in config are absolute and correct
+**1. MCP Server Not Found**
+- Error: "No such tool available: mcp__agr-genomics__..."
+- Solution: Restart Claude Code completely after config changes
+- Check: Verify config file is in correct location and has valid JSON
+
+**2. Server Fails to Start**
+```bash
+# Test server manually first
+cd /path/to/project
+npm start
+# Should show: "Enhanced AGR MCP Server started successfully"
+```
+
+**3. Path Issues**
+```bash
+# Get correct absolute path
+pwd
+# Use output in config file - never use relative paths
+```
+
+**4. Node.js Version**
+```bash
+node --version
+# Must be 18.0.0 or higher
+```
+
+**5. NLP Features Not Available**
+- **Option A (npm)**: Use `agr-mcp-natural` binary for NLP-only tools
+- **Option B (source)**: Use full configuration pointing to `agr-server-enhanced.js`
+- **Test Query**: "What genes interact with BRCA1 in DNA repair pathways?"
+- **Expected**: Should show semantic parsing breakdown, not keyword search
+
+**6. Connection Timeouts**
+- Increase `API_TIMEOUT` to 60000 in config
+- Check internet connection to AGR APIs
+- Try: `npm run health-check` to test API connectivity
+
+**7. Tool Response Errors**
+- Check logs: Look in terminal where Claude Code is running
+- Clear cache: Use "Clear cache statistics" query
+- Restart: Both the MCP server and Claude Code
+
+**8. Config File Location Issues**
+
+**Claude Code** (not Desktop) configs can be in:
+- Current project directory (if configured)
+- User-specific configuration directory
+- Check Claude Code documentation for exact paths
+
+**9. Debugging Steps**
+```bash
+# 1. Test server directly
+node src/agr-server-enhanced.js
+
+# 2. Test with timeout
+timeout 5s node src/agr-server-enhanced.js
+
+# 3. Check dependencies
+npm run validate
+
+# 4. Test NLP specifically
+node test-nlp-direct.js
+```
 
 ## Performance Features
 - 25-40% faster than Python version
