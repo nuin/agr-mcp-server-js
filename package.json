@@ -1,6 +1,6 @@
 {
   "name": "agr-mcp-server-enhanced",
-  "version": "3.0.0",
+  "version": "3.2.2",
   "description": "Enhanced Alliance of Genome Resources MCP Server - High-performance JavaScript implementation with simplified search capabilities",
   "type": "module",
   "main": "src/agr-server-enhanced.js",
