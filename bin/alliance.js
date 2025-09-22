@@ -159,34 +159,70 @@ class AllianceNLP {
 }
 
 class AllianceCLI {
-  constructor() {
+  constructor(flags = {}) {
     this.nlp = new AllianceNLP();
-    this.serverPath = join(__dirname, '..', 'src', 'agr-server-enhanced.js');
+    this.flags = flags;
+
+    // Choose server based on flags
+    if (flags.simple || flags.fast) {
+      this.serverPath = join(__dirname, '..', 'src', 'agr-server-simple.js');
+    } else if (flags.enhanced || flags.detailed) {
+      this.serverPath = join(__dirname, '..', 'src', 'agr-server-enhanced.js');
+    } else {
+      // Smart default: use simple for basic queries, enhanced for complex
+      this.serverPath = join(__dirname, '..', 'src', 'agr-server-simple.js');
+    }
   }
   
   async runQuery(command) {
     return new Promise((resolve, reject) => {
+      // Add timeout for the entire operation
+      const timeout = setTimeout(() => {
+        server.kill();
+        reject(new Error('Query timed out after 10 seconds'));
+      }, 10000);
+
       const server = spawn('node', [this.serverPath], {
         stdio: ['pipe', 'pipe', 'inherit']
       });
-      
+
       let responseReceived = false;
-      
+      let rawOutput = '';
+
       server.stdout.on('data', (data) => {
-        try {
-          const response = JSON.parse(data.toString());
-          if (response.result && response.result.content) {
-            const content = JSON.parse(response.result.content[0].text);
-            responseReceived = true;
-            resolve(content);
+        rawOutput += data.toString();
+
+        // Try to parse each line as JSON
+        const lines = rawOutput.split('\n');
+        for (const line of lines) {
+          if (!line.trim()) continue;
+
+          try {
+            const response = JSON.parse(line);
+            if (response.result && response.result.content) {
+              const content = JSON.parse(response.result.content[0].text);
+              responseReceived = true;
+              clearTimeout(timeout);
+              server.kill();
+              resolve(content);
+              return;
+            }
+          } catch (e) {
+            // Continue trying other lines
           }
-        } catch (e) {
-          // Ignore JSON parse errors for logs
         }
       });
-      
+
       server.on('error', (error) => {
+        clearTimeout(timeout);
         reject(error);
+      });
+
+      server.on('exit', (code) => {
+        clearTimeout(timeout);
+        if (!responseReceived) {
+          reject(new Error(`Server exited with code ${code} without response`));
+        }
       });
       
       // Send query immediately after brief startup delay
@@ -293,16 +329,24 @@ class AllianceCLI {
   
   showHelp() {
     console.log('🧬 Alliance of Genome Resources - Natural Language CLI\n');
-    console.log('Usage: alliance "<natural language query>"\n');
+    console.log('Usage: alliance "<natural language query>" [flags]\n');
     console.log('Examples:');
     console.log('  alliance "find BRCA1 genes in xenopus"');
     console.log('  alliance "search for breast cancer diseases"');
     console.log('  alliance "get information about HGNC:1100"');
     console.log('  alliance "BLAST sequence ATCGATCGATCG"');
     console.log('  alliance "cache statistics"\n');
+
+    console.log('Performance Flags:');
+    console.log('  --fast          Fast mode (fewer results, skip details)');
+    console.log('  --detailed      Detailed mode (more info, slower)');
+    console.log('  --simple        Use simple server (faster)');
+    console.log('  --enhanced      Use enhanced server (advanced features)');
+    console.log('  --limit=N       Limit results to N items\n');
+
     console.log('Supported patterns:');
     console.log('  • Gene searches: "find/search [gene] genes [in species]"');
-    console.log('  • Disease searches: "find/search [disease] diseases"'); 
+    console.log('  • Disease searches: "find/search [disease] diseases"');
     console.log('  • Gene info: "info about [GENE:ID]"');
     console.log('  • BLAST: "blast [sequence]"');
     console.log('  • Performance: "cache stats"\n');
@@ -313,14 +357,38 @@ class AllianceCLI {
 // Main execution
 async function main() {
   const args = process.argv.slice(2);
-  const query = args.join(' ').trim();
-  
+
+  // Parse flags
+  const flags = {
+    fast: args.includes('--fast'),
+    detailed: args.includes('--detailed'),
+    simple: args.includes('--simple'),
+    enhanced: args.includes('--enhanced'),
+    limit: null
+  };
+
+  // Extract limit flag
+  const limitIndex = args.findIndex(arg => arg.startsWith('--limit'));
+  if (limitIndex !== -1) {
+    const limitArg = args[limitIndex];
+    if (limitArg.includes('=')) {
+      flags.limit = parseInt(limitArg.split('=')[1]);
+    } else if (args[limitIndex + 1]) {
+      flags.limit = parseInt(args[limitIndex + 1]);
+      args.splice(limitIndex + 1, 1); // Remove the limit value
+    }
+    args.splice(limitIndex, 1); // Remove the limit flag
+  }
+
+  // Remove other flags from query
+  const query = args.filter(arg => !arg.startsWith('--')).join(' ').trim();
+
   if (!query || query === '--help' || query === '-h') {
     new AllianceCLI().showHelp();
     return;
   }
   
-  const cli = new AllianceCLI();
+  const cli = new AllianceCLI(flags);
   const parsed = cli.nlp.parseCommand(query);
   
   if (!parsed) {
@@ -342,7 +410,7 @@ async function main() {
           name: 'search_genes',
           arguments: {
             query: parsed.query,
-            limit: 5,
+            limit: flags.limit || (flags.fast ? 3 : 5),
             ...(parsed.species && { species: parsed.species })
           }
         };

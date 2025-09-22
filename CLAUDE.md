@@ -44,6 +44,9 @@ npm start
 - **Setup**: `npm run setup` (install + validate)
 - **Benchmarking**: `npm run benchmark`
 - **Documentation**: `npm run docs` (generates JSDoc documentation)
+- **Cache Management**: `npm run cache:clear`
+- **Docker**: `npm run docker:build` and `npm run docker:run`
+- **Pre-commit**: `npm run precommit` (lint + format + test)
 
 ## Easy Query Commands (No JSON-RPC Required)
 - **Query Help**: `npm run query` (shows available commands)
@@ -89,7 +92,10 @@ This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in
 
 ### Key Files
 - `src/agr-server-enhanced.js`: Main server implementation with all genomics tools
+- `src/agr-server-simple.js`: Simplified MCP server (main binary: `agr-mcp-server`)
+- `src/agr-server-simple-natural.js`: Natural language MCP server (binary: `agr-mcp-natural`)
 - `bin/alliance.js`: Natural language CLI interface for conversational queries
+- `bin/agr-chat.js`: Interactive chat interface (binaries: `agr-chat`, `agr`)
 - `package.json`: Dependencies and npm scripts (30+ scripts available)
 - `test/agr-client.test.js`: Comprehensive Vitest test suite with mocking, performance, and integration tests
 - `test/setup.js`: Test configuration and setup
@@ -126,12 +132,13 @@ This is an Enhanced Alliance of Genome Resources (AGR) MCP Server implemented in
 ## Development Workflow
 - Uses ESLint with Standard config and Prettier for formatting
 - Vitest for testing with coverage reporting (thresholds: 70% branches, 80% functions/lines/statements)
+- Test timeout: 30s, hook timeout: 10s, automatic retry in CI (2 retries for failed tests)
 - JSDoc documentation throughout codebase
 - Docker support with docker-compose
 - PM2 process manager support for production
 - Test environment isolation with mocking support
 - CI/CD ready with GitHub Actions reporter
-- Automatic retry in CI (2 retries for failed tests)
+- Path aliases: `@` for src/, `@test` for test/
 
 ## Testing Strategy
 - **Unit Tests**: Core functionality with axios mocking

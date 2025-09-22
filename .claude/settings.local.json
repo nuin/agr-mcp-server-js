@@ -10,7 +10,11 @@
       "Bash(timeout:*)",
       "Bash(npm run:*)",
       "Bash(alliance \"BRCA1 genes in human\")",
-      "mcp__agr-genomics__complex_search"
+      "mcp__agr-genomics__complex_search",
+      "Bash(export:*)",
+      "Bash(alliance \"find PTEN gene\")",
+      "Bash(pdflatex:*)",
+      "Bash(xelatex:*)"
     ],
     "deny": []
   },

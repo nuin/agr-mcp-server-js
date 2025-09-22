@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGR MCP Server - JavaScript Implementation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #7f8c8d;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #3498db;
+        }
+
+        /* Main content */
+        .main {
+            margin-top: 80px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Hero section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8rem 0 6rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero h2 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Section styling */
+        .section {
+            padding: 5rem 0;
+        }
+
+        .section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #e1e8ed;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .card p {
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+
+        .card ul {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .card ul li {
+            color: #5a6c7d;
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .card ul li::before {
+            content: '→';
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 2rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-language);
+            position: absolute;
+            top: 0.5rem;
+            right: 1rem;
+            color: #95a5a6;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .code-block .comment {
+            color: #95a5a6;
+        }
+
+        .code-block .keyword {
+            color: #3498db;
+        }
+
+        .code-block .string {
+            color: #2ecc71;
+        }
+
+        /* Architecture diagram */
+        .architecture {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            margin: 3rem 0;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .arch-component {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e1e8ed;
+            transition: border-color 0.3s ease;
+        }
+
+        .arch-component:hover {
+            border-color: #3498db;
+        }
+
+        .arch-component h4 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .arch-component p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* Statistics */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #3498db;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        /* Installation section */
+        .install-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .install-option {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .install-option h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .install-option .badge {
+            background: #3498db;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1rem;
+            color: #3498db;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #bdc3c7;
+            text-decoration: none;
+            line-height: 1.8;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .nav {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero h2 {
+                font-size: 1.2rem;
+            }
+
+            .section {
+                padding: 3rem 0;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .install-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Loading animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-title">🧬 AGR MCP Server</div>
+            <div class="nav-links">
+                <a href="#overview">Overview</a>
+                <a href="#features">Features</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#installation">Installation</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge">JavaScript Implementation</div>
+                    <h1>AGR MCP Server</h1>
+                    <h2>Model Context Protocol interface for genomics research</h2>
+                </div>
+            </div>
+        </section>
+
+        <!-- Overview Section -->
+        <section id="overview" class="section">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <h2>Project Overview</h2>
+                    <p>A high-performance JavaScript implementation of the Alliance of Genome Resources MCP server, providing seamless access to genomics data through the Model Context Protocol.</p>
+                </div>
+
+                <div class="stats fade-in">
+                    <div class="stat">
+                        <span class="stat-number">12</span>
+                        <span class="stat-label">MCP Tools</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">3</span>
+                        <span class="stat-label">Server Variants</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Node.js</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="section">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <h2>Key Features</h2>
+                    <p>Advanced capabilities for modern genomics research workflows</p>
+                </div>
+
+                <div class="cards fade-in">
+                    <div class="card">
+                        <span class="card-icon">🔍</span>
+                        <h3>Advanced Query Engine</h3>
+                        <p>Sophisticated search capabilities with natural language processing</p>
+                        <ul>
+                            <li>Boolean operators (AND, OR, NOT)</li>
+                            <li>Species-specific filtering</li>
+                            <li>Cross-entity search</li>
+                            <li>Process detection</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <span class="card-icon">⚡</span>
+                        <h3>High-Performance Architecture</h3>
+                        <p>Built for speed and reliability with modern Node.js</p>
+                        <ul>
+                            <li>Intelligent caching (5-10 min TTL)</li>
+                            <li>Connection pooling</li>
+                            <li>Rate limiting (100 req/min)</li>
+                            <li>Exponential backoff retry</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <span class="card-icon">🛠️</span>
+                        <h3>Multiple Interfaces</h3>
+                        <p>Flexible access methods for different use cases</p>
+                        <ul>
+                            <li>MCP server for Claude Desktop</li>
+                            <li>CLI tools for command line</li>
+                            <li>Interactive chat interface</li>
+                            <li>Natural language server</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <span class="card-icon">🧬</span>
+                        <h3>Comprehensive Genomics Tools</h3>
+                        <p>12 specialized MCP tools for research workflows</p>
+                        <ul>
+                            <li>Gene search and information</li>
+                            <li>Disease associations</li>
+                            <li>Expression data analysis</li>
+                            <li>BLAST sequence search</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="section">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <h2>System Architecture</h2>
+                    <p>Modern, scalable design built on Node.js and the MCP protocol</p>
+                </div>
+
+                <div class="architecture fade-in">
+                    <div class="arch-grid">
+                        <div class="arch-component">
+                            <h4>🖥️ MCP Client</h4>
+                            <p>Claude Desktop integration</p>
+                        </div>
+                        <div class="arch-component">
+                            <h4>🚀 AGR Server</h4>
+                            <p>Core JavaScript implementation</p>
+                        </div>
+                        <div class="arch-component">
+                            <h4>💾 NodeCache</h4>
+                            <p>Intelligent caching layer</p>
+                        </div>
+                        <div class="arch-component">
+                            <h4>🌐 HTTP Client</h4>
+                            <p>Axios with connection pooling</p>
+                        </div>
+                        <div class="arch-component">
+                            <h4>📊 Monitoring</h4>
+                            <p>Performance tracking</p>
+                        </div>
+                        <div class="arch-component">
+                            <h4>🔬 AGR APIs</h4>
+                            <p>Genomics data sources</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cards fade-in">
+                    <div class="card">
+                        <span class="card-icon">🔧</span>
+                        <h3>Technical Stack</h3>
+                        <ul>
+                            <li>Node.js 18+ runtime</li>
+                            <li>MCP protocol compliance</li>
+                            <li>Axios HTTP client</li>
+                            <li>Pino structured logging</li>
+                            <li>Vitest testing framework</li>
+                            <li>ESLint + Prettier</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <span class="card-icon">📈</span>
+                        <h3>Performance Features</h3>
+                        <ul>
+                            <li>Async I/O operations</li>
+                            <li>Memory-efficient design</li>
+                            <li>Automatic cleanup</li>
+                            <li>Input validation</li>
+                            <li>Error handling</li>
+                            <li>Response optimization</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation Section -->
+        <section id="installation" class="section">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <h2>Installation & Usage</h2>
+                    <p>Get started with the AGR MCP server in minutes</p>
+                </div>
+
+                <div class="install-options fade-in">
+                    <div class="install-option">
+                        <h3>
+                            📦 npm Package
+                            <span class="badge">Recommended</span>
+                        </h3>
+                        <div class="code-block" data-language="bash">
+<span class="comment"># Install globally from npm</span>
+<span class="keyword">npm</span> install -g agr-mcp-server-enhanced
+
+<span class="comment"># Available binaries</span>
+agr-mcp-server     <span class="comment"># Main MCP server</span>
+agr-mcp-natural    <span class="comment"># Natural language server</span>
+alliance           <span class="comment"># CLI interface</span>
+agr-chat           <span class="comment"># Interactive chat</span>
+                        </div>
+                    </div>
+
+                    <div class="install-option">
+                        <h3>⚙️ From Source</h3>
+                        <div class="code-block" data-language="bash">
+<span class="comment"># Clone and setup</span>
+<span class="keyword">git</span> clone https://github.com/nuin/agr-mcp-server-js.git
+<span class="keyword">cd</span> agr-mcp-server-js
+<span class="keyword">npm</span> run setup
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card fade-in">
+                    <span class="card-icon">🔗</span>
+                    <h3>Claude Desktop Configuration</h3>
+                    <p>Connect the MCP server to Claude Desktop for seamless integration</p>
+                    <div class="code-block" data-language="json">
+{
+  <span class="string">"mcpServers"</span>: {
+    <span class="string">"agr-genomics"</span>: {
+      <span class="string">"command"</span>: <span class="string">"agr-mcp-server"</span>,
+      <span class="string">"env"</span>: {
+        <span class="string">"LOG_LEVEL"</span>: <span class="string">"info"</span>
+      }
+    }
+  }
+}
+                    </div>
+                </div>
+
+                <div class="cards fade-in">
+                    <div class="card">
+                        <span class="card-icon">💻</span>
+                        <h3>CLI Examples</h3>
+                        <div class="code-block" data-language="bash">
+<span class="comment"># Natural language queries</span>
+alliance <span class="string">"find BRCA1 genes"</span>
+alliance <span class="string">"DNA repair genes NOT p53 in human"</span>
+
+<span class="comment"># Performance flags</span>
+alliance <span class="string">"PTEN"</span> --fast --limit=5
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <span class="card-icon">🧠</span>
+                        <h3>Query Examples</h3>
+                        <ul>
+                            <li>"breast cancer genes in human AND DNA repair NOT p53"</li>
+                            <li>"insulin OR glucose in mouse"</li>
+                            <li>"BRCA1 in human"</li>
+                            <li>"apoptosis genes in zebrafish"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Repository</h4>
+                    <p>agr-mcp-server-js</p>
+                    <p>JavaScript implementation</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Package</h4>
+                    <p>agr-mcp-server-enhanced</p>
+                    <p>Available on npm</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Architecture</h4>
+                    <p>Node.js + MCP protocol</p>
+                    <p>12 specialized tools</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Alliance of Genome Resources</h4>
+                    <p>Genomics research platform</p>
+                    <p>Multi-organism support</p>
+                </div>
+            </div>
+            <p style="border-top: 1px solid #34495e; padding-top: 2rem; margin-top: 2rem; color: #95a5a6;">
+                AGR MCP Server - Professional genomics research tools
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Add fade-in animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationDelay = '0.2s';
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all elements with fade-in class
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

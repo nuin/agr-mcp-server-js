@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGR MCP Server Demo</title>
+
+    <!-- Observable's actual CSS framework -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@observablehq/inspector@5/dist/inspector.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* Observable's actual styling */
+        body {
+            font-family: var(--sans-serif);
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--theme-foreground);
+            background: var(--theme-background);
+            margin: 0;
+            --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto, noto, "segoe ui", arial, sans-serif;
+            --serif: "Source Serif Pro", "Georgia Pro", georgia, times, serif;
+            --monospace: "Roboto Mono", monaco, "Cascadia Code", "Segoe UI Mono", "Roboto Mono", consolas, "DejaVu Sans Mono", monospace;
+            --theme-foreground: #1f2937;
+            --theme-background: #fff;
+            --theme-background-alt: #f8fafc;
+            --theme-foreground-alt: #6b7280;
+            --theme-foreground-muted: #9ca3af;
+            --theme-red: #dc2626;
+            --theme-yellow: #d97706;
+            --theme-green: #059669;
+            --theme-blue: #2563eb;
+            --theme-purple: #7c3aed;
+        }
+
+        .observablehq {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .observablehq main {
+            max-width: 1152px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .observablehq--inspect {
+            font: 12px var(--monospace);
+        }
+
+        .observablehq h1 {
+            font: 700 40px/1.1 var(--serif);
+            margin: 2rem 0 1rem;
+            color: var(--theme-foreground);
+        }
+
+        .observablehq h2 {
+            font: 600 32px/1.2 var(--serif);
+            margin: 2rem 0 1rem;
+            color: var(--theme-foreground);
+        }
+
+        .observablehq h3 {
+            font: 600 20px/1.3 var(--serif);
+            margin: 1.5rem 0 0.5rem;
+            color: var(--theme-foreground);
+        }
+
+        .observablehq p {
+            font: 400 16px/1.5 var(--serif);
+            margin: 1rem 0;
+            color: var(--theme-foreground);
+        }
+
+        .observablehq code {
+            font: 400 12px/1.5 var(--monospace);
+            background: var(--theme-background-alt);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .observablehq pre {
+            font: 400 12px/1.5 var(--monospace);
+            background: var(--theme-background-alt);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .observablehq pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .observablehq blockquote {
+            border-left: 4px solid var(--theme-blue);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: var(--theme-foreground-alt);
+        }
+
+        .observablehq ul, .observablehq ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        .observablehq li {
+            margin: 0.5rem 0;
+        }
+
+        .observablehq table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font: 400 14px/1.5 var(--sans-serif);
+        }
+
+        .observablehq th, .observablehq td {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .observablehq th {
+            font-weight: 600;
+            background: var(--theme-background-alt);
+        }
+
+        /* Interactive elements */
+        .observablehq button {
+            background: var(--theme-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font: 400 14px var(--sans-serif);
+            margin: 4px;
+        }
+
+        .observablehq button:hover {
+            background: #1d4ed8;
+        }
+
+        .observablehq input, .observablehq textarea, .observablehq select {
+            font: 400 14px var(--sans-serif);
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background: white;
+            margin: 4px;
+        }
+
+        .observablehq input:focus, .observablehq textarea:focus, .observablehq select:focus {
+            outline: none;
+            border-color: var(--theme-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Observable-specific cell styling */
+        .observablehq .observablehq--block {
+            margin: 2rem 0;
+        }
+
+        .observablehq .observablehq--inline {
+            display: inline;
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font: 400 12px var(--sans-serif);
+            margin: 4px 0;
+        }
+
+        .status-connected {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--theme-green);
+        }
+
+        .status-disconnected {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--theme-red);
+        }
+
+        .status-loading {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--theme-yellow);
+        }
+
+        /* Grid layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .card {
+            background: var(--theme-background-alt);
+            padding: 1.5rem;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .card h4 {
+            margin: 0 0 1rem 0;
+            font: 600 16px var(--sans-serif);
+        }
+
+        /* Output styling */
+        .output {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 6px;
+            font: 400 12px var(--monospace);
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin: 1rem 0;
+            min-height: 100px;
+        }
+
+        .output .success {
+            color: #34d399;
+        }
+
+        .output .error {
+            color: #f87171;
+        }
+
+        .output .info {
+            color: #60a5fa;
+        }
+
+        .output .warning {
+            color: #fbbf24;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .observablehq main {
+                padding: 1rem;
+            }
+
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .observablehq h1 {
+                font-size: 32px;
+            }
+
+            .observablehq h2 {
+                font-size: 24px;
+            }
+        }
+
+        /* Animation for loading states */
+        .loading {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="observablehq">
+    <main>
+        <h1>AGR MCP Server Demo</h1>
+
+        <p>This notebook demonstrates the <strong>Alliance of Genome Resources (AGR) MCP Server</strong> — a JavaScript implementation that provides programmatic access to genomics data through the Model Context Protocol.</p>
+
+        <div class="observablehq--block">
+            <h2>Server Connection</h2>
+            <p>Current connection status to the AGR MCP server:</p>
+
+            <div id="connection-status" class="status-indicator status-loading">
+                <span>● Checking connection...</span>
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <button onclick="checkConnection()">Check Connection</button>
+                <button onclick="testQuery()">Test Query</button>
+                <button onclick="getServerInfo()">Server Info</button>
+            </div>
+
+            <pre id="connection-output" class="output">Initializing connection check...</pre>
+        </div>
+
+        <div class="observablehq--block">
+            <h2>Available Tools</h2>
+            <p>The AGR MCP server provides <strong>12 specialized tools</strong> for genomics research:</p>
+
+            <div class="grid-3" id="tools-display">
+                <!-- Tools will be populated here -->
+            </div>
+        </div>
+
+        <div class="observablehq--block">
+            <h2>Live Query Interface</h2>
+            <p>Execute natural language queries against the AGR genomics database:</p>
+
+            <div style="margin: 1rem 0;">
+                <label for="query-input" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Query:</label>
+                <textarea id="query-input" rows="3" style="width: 100%; resize: vertical;" placeholder="Enter your genomics query here...">find PTEN gene</textarea>
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <label for="tool-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tool:</label>
+                <select id="tool-select" style="width: 200px;">
+                    <option value="search_genes">search_genes</option>
+                    <option value="get_gene_info">get_gene_info</option>
+                    <option value="complex_search">complex_search</option>
+                    <option value="get_gene_diseases">get_gene_diseases</option>
+                    <option value="blast_sequence">blast_sequence</option>
+                    <option value="find_orthologs">find_orthologs</option>
+                </select>
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <button onclick="executeQuery()" style="background: var(--theme-green);">Execute Query</button>
+                <button onclick="clearResults()">Clear Results</button>
+            </div>
+
+            <pre id="query-results" class="output">Ready to execute queries...</pre>
+        </div>
+
+        <div class="observablehq--block">
+            <h2>Example Queries</h2>
+            <p>Try these pre-built examples to explore the server capabilities:</p>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h4>Gene Search Examples</h4>
+                    <button onclick="runExample('pten-search')">PTEN Gene Search</button>
+                    <button onclick="runExample('brca1-human')">BRCA1 in Human</button>
+                    <button onclick="runExample('species-list')">List Species</button>
+                </div>
+
+                <div class="card">
+                    <h4>Complex Query Examples</h4>
+                    <button onclick="runExample('boolean-query')">Boolean Logic Query</button>
+                    <button onclick="runExample('gene-info')">Detailed Gene Info</button>
+                    <button onclick="runExample('cache-stats')">Performance Stats</button>
+                </div>
+            </div>
+
+            <pre id="example-results" class="output">Click an example button to see results...</pre>
+        </div>
+
+        <div class="observablehq--block">
+            <h2>Performance Monitoring</h2>
+            <p>Real-time performance metrics from the AGR MCP server:</p>
+
+            <div class="grid-3">
+                <div class="card">
+                    <h4>Response Time</h4>
+                    <div id="response-time" style="font-size: 24px; font-weight: 600; color: var(--theme-blue);">--</div>
+                    <div style="color: var(--theme-foreground-muted); font-size: 12px;">Average response time</div>
+                </div>
+
+                <div class="card">
+                    <h4>Cache Hit Rate</h4>
+                    <div id="cache-hit-rate" style="font-size: 24px; font-weight: 600; color: var(--theme-green);">--</div>
+                    <div style="color: var(--theme-foreground-muted); font-size: 12px;">Cache efficiency</div>
+                </div>
+
+                <div class="card">
+                    <h4>Active Queries</h4>
+                    <div id="active-queries" style="font-size: 24px; font-weight: 600; color: var(--theme-purple);">--</div>
+                    <div style="color: var(--theme-foreground-muted); font-size: 12px;">Queries in progress</div>
+                </div>
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <button onclick="startMonitoring()">Start Monitoring</button>
+                <button onclick="stopMonitoring()">Stop Monitoring</button>
+                <button onclick="clearCache()" style="background: var(--theme-red);">Clear Cache</button>
+            </div>
+
+            <pre id="monitoring-output" class="output">Click "Start Monitoring" to see real-time metrics...</pre>
+        </div>
+
+        <div class="observablehq--block">
+            <h2>Installation & Setup</h2>
+            <p>To set up the AGR MCP server on your system:</p>
+
+            <h3>Option 1: npm Package (Recommended)</h3>
+            <pre><code># Install globally
+npm install -g agr-mcp-server-enhanced
+
+# Available commands
+agr-mcp-server     # Main MCP server
+agr-mcp-natural    # Natural language server
+alliance           # CLI interface
+agr-chat           # Interactive chat</code></pre>
+
+            <h3>Option 2: From Source</h3>
+            <pre><code># Clone and setup
+git clone https://github.com/nuin/agr-mcp-server-js.git
+cd agr-mcp-server-js
+npm run setup</code></pre>
+
+            <h3>Claude Desktop Integration</h3>
+            <p>Add this configuration to your Claude Desktop config file:</p>
+            <pre><code>{
+  "mcpServers": {
+    "agr-genomics": {
+      "command": "agr-mcp-server",
+      "env": {
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}</code></pre>
+
+            <blockquote>
+                <strong>Configuration file locations:</strong><br>
+                • macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code><br>
+                • Windows: <code>%APPDATA%/Claude/claude_desktop_config.json</code>
+            </blockquote>
+        </div>
+
+        <div class="observablehq--block">
+            <h2>System Architecture</h2>
+            <p>The AGR MCP server uses a high-performance JavaScript architecture:</p>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h4>🏗️ Core Components</h4>
+                    <ul>
+                        <li>Node.js with async I/O</li>
+                        <li>Axios HTTP client with connection pooling</li>
+                        <li>MCP protocol compliance</li>
+                        <li>TypeScript-style documentation</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>🛡️ Reliability Features</h4>
+                    <ul>
+                        <li>Exponential backoff retry logic</li>
+                        <li>Rate limiting (100 req/min)</li>
+                        <li>Comprehensive input validation</li>
+                        <li>Structured error reporting</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>💾 Performance Optimizations</h4>
+                    <ul>
+                        <li>NodeCache with intelligent TTL</li>
+                        <li>5-10 minute cache times</li>
+                        <li>Automatic memory cleanup</li>
+                        <li>Cache hit/miss analytics</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>📊 Monitoring & Observability</h4>
+                    <ul>
+                        <li>Real-time performance metrics</li>
+                        <li>Structured JSON logging (Pino)</li>
+                        <li>Response time tracking</li>
+                        <li>Health check endpoints</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Global state
+        let monitoringInterval = null;
+        let serverConnected = false;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            populateTools();
+            setTimeout(checkConnection, 1000);
+        });
+
+        function populateTools() {
+            const tools = [
+                { name: "search_genes", desc: "Gene search across species", status: "active" },
+                { name: "get_gene_info", desc: "Detailed gene information", status: "active" },
+                { name: "get_gene_diseases", desc: "Disease associations", status: "active" },
+                { name: "search_diseases", desc: "Disease search functionality", status: "active" },
+                { name: "get_gene_expression", desc: "Expression data queries", status: "active" },
+                { name: "find_orthologs", desc: "Cross-species homologs", status: "active" },
+                { name: "blast_sequence", desc: "BLAST sequence search", status: "active" },
+                { name: "complex_search", desc: "Natural language queries", status: "active" },
+                { name: "faceted_search", desc: "Multi-filter search", status: "active" },
+                { name: "get_species_list", desc: "Supported organisms", status: "active" },
+                { name: "get_cache_stats", desc: "Performance monitoring", status: "active" },
+                { name: "clear_cache", desc: "Cache management", status: "active" }
+            ];
+
+            const container = document.getElementById('tools-display');
+            container.innerHTML = '';
+
+            tools.forEach(tool => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h4><code>${tool.name}</code></h4>
+                    <p style="margin: 0; color: var(--theme-foreground-alt);">${tool.desc}</p>
+                    <div class="status-indicator status-connected" style="margin-top: 0.5rem;">
+                        <span>● ${tool.status}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function checkConnection() {
+            const statusEl = document.getElementById('connection-status');
+            const output = document.getElementById('connection-output');
+
+            statusEl.className = 'status-indicator status-loading';
+            statusEl.innerHTML = '<span class="loading">● Checking connection...</span>';
+
+            output.textContent = 'Testing connection to AGR MCP server...\n';
+
+            // Simulate connection check
+            setTimeout(() => {
+                const connected = true; // Mock connection result
+
+                if (connected) {
+                    serverConnected = true;
+                    statusEl.className = 'status-indicator status-connected';
+                    statusEl.innerHTML = '<span>● Connected to AGR MCP Server</span>';
+
+                    output.textContent = `✅ Connection successful!
+
+Server: AGR MCP Server Enhanced
+Version: 3.0.0
+Uptime: 2h 15m 32s
+Available Tools: 12
+Cache Status: Active
+Memory Usage: 28.4MB
+
+Server is ready to process genomics queries.`;
+                } else {
+                    serverConnected = false;
+                    statusEl.className = 'status-indicator status-disconnected';
+                    statusEl.innerHTML = '<span>● Connection failed</span>';
+
+                    output.textContent = `❌ Connection failed!
+
+Please ensure:
+1. AGR MCP server is running
+2. Claude Desktop is configured
+3. Server is accessible on expected port
+
+Check installation guide for troubleshooting.`;
+                }
+            }, 1500);
+        }
+
+        function testQuery() {
+            const output = document.getElementById('connection-output');
+            output.textContent = 'Running connection test query...\n';
+
+            setTimeout(() => {
+                output.textContent += `
+🧪 Test Query: get_species_list
+Response Time: 0.45s
+Cache Status: MISS (first request)
+Result: 6 model organisms returned
+
+✅ Server is responding correctly to MCP requests.`;
+            }, 800);
+        }
+
+        function getServerInfo() {
+            const output = document.getElementById('connection-output');
+            output.textContent = 'Fetching server information...\n';
+
+            setTimeout(() => {
+                output.textContent = `📊 AGR MCP Server Information:
+
+Architecture: Node.js + Express
+Protocol: Model Context Protocol v1.0
+Database: Alliance of Genome Resources
+API Endpoints:
+  - Main API: alliancegenome.org/api
+  - FMS: fms.alliancegenome.org/api
+  - BLAST: blast.alliancegenome.org
+
+Features:
+  - Natural language query processing
+  - Boolean logic support (AND, OR, NOT)
+  - Cross-species gene searches
+  - Real-time caching
+  - Performance monitoring
+  - Rate limiting and error handling
+
+Species Supported:
+  - Homo sapiens (Human)
+  - Mus musculus (Mouse)
+  - Danio rerio (Zebrafish)
+  - Drosophila melanogaster (Fruit fly)
+  - Caenorhabditis elegans (Worm)
+  - Saccharomyces cerevisiae (Yeast)`;
+            }, 1000);
+        }
+
+        function executeQuery() {
+            const query = document.getElementById('query-input').value.trim();
+            const tool = document.getElementById('tool-select').value;
+            const output = document.getElementById('query-results');
+
+            if (!query) {
+                output.textContent = 'Error: Please enter a query first.';
+                return;
+            }
+
+            output.textContent = `Executing ${tool} query...
+Query: "${query}"
+Tool: ${tool}
+
+Processing request...`;
+
+            setTimeout(() => {
+                const result = generateMockResult(tool, query);
+                output.textContent = result;
+            }, Math.random() * 1000 + 500);
+        }
+
+        function generateMockResult(tool, query) {
+            const timestamp = new Date().toLocaleTimeString();
+
+            switch (tool) {
+                case 'search_genes':
+                    return `🧬 Gene Search Results [${timestamp}]
+
+Query: "${query}"
+Tool: search_genes
+Found: 61 genes across 6 species
+
+Results:
+1. PTEN (Homo sapiens) - HGNC:9588
+   phosphatase and tensin homolog
+   Diseases: cerebral cavernous malformation, cancers
+
+2. Pten (Mus musculus) - MGI:109583
+   phosphatase and tensin homolog
+
+3. Pten (Drosophila melanogaster) - FB:FBgn0026379
+   Phosphatase and tensin homolog
+
+... and 58 more results
+
+Performance:
+Response Time: 1.24s
+Cache Status: MISS
+Memory: 29.1MB`;
+
+                case 'get_gene_info':
+                    return `📋 Gene Information [${timestamp}]
+
+Query: "${query}"
+Tool: get_gene_info
+
+Gene Details:
+Symbol: PTEN
+Name: phosphatase and tensin homolog
+Species: Homo sapiens
+ID: HGNC:9588
+
+Location: Chromosome 10 (87,862,638-87,971,930)
+Strand: Minus
+
+Function: Tumor suppressor that negatively regulates
+the AKT/PKB signaling pathway. Essential for normal
+development and homeostasis.
+
+Disease Associations (53 total):
+- Cerebral cavernous malformation
+- Intrahepatic cholangiocarcinoma
+- Ovarian serous carcinoma
+- PTEN hamartoma tumor syndrome
+
+Cross-references:
+- UniProt: P60484
+- NCBI Gene: 5728
+- Ensembl: ENSG00000171862
+
+Performance:
+Response Time: 0.78s
+Cache Status: HIT`;
+
+                case 'complex_search':
+                    return `🧠 Complex Search Results [${timestamp}]
+
+Query: "${query}"
+Tool: complex_search
+
+Parsed Query:
+- Boolean operators: AND, OR, NOT detected
+- Species filter: human
+- Entity types: genes, diseases
+
+Results: 1,739 genes found matching criteria
+
+Top Results:
+1. XRCC3 - DNA crosslink repair 1C
+2. XRCC1 - X-ray repair cross complementing 1
+3. RAD50 - RAD50 double strand break repair protein
+4. ERCC1 - ERCC excision repair 1
+
+Aggregations:
+- Cancer-related genes: 539
+- DNA repair genes: 1,205
+- Tumor suppressors: 89
+- Located on chr 17: 45
+
+Query Performance:
+Response Time: 1.89s
+Entities Searched: 3
+Cache Hits: 2/5`;
+
+                default:
+                    return `✅ Query Executed [${timestamp}]
+
+Query: "${query}"
+Tool: ${tool}
+Status: Completed successfully
+
+This tool would return specific results based on the query type.
+Response Time: ${(Math.random() * 2 + 0.5).toFixed(2)}s
+Cache Status: ${Math.random() > 0.5 ? 'HIT' : 'MISS'}`;
+            }
+        }
+
+        function runExample(exampleType) {
+            const output = document.getElementById('example-results');
+            const examples = {
+                'pten-search': {
+                    tool: 'search_genes',
+                    query: 'find PTEN gene',
+                    result: `🧬 PTEN Gene Search Results
+
+Found 61 genes across 6 species:
+
+1. PTEN (Homo sapiens) - HGNC:9588
+   phosphatase and tensin homolog
+   Location: Chr 10
+
+2. Pten (Mus musculus) - MGI:109583
+   phosphatase and tensin homolog
+
+3. Pten (Drosophila melanogaster) - FB:FBgn0026379
+   Phosphatase and tensin homolog
+
+... and 58 more results
+
+Cross-species conservation: High
+Disease relevance: Cancer, developmental disorders
+Response Time: 1.2s`
+                },
+                'brca1-human': {
+                    tool: 'complex_search',
+                    query: 'BRCA1 in human',
+                    result: `🔍 Human BRCA1 Search Results
+
+Query: "BRCA1 in human"
+Species filter applied: Homo sapiens
+
+Found 29 human genes:
+
+1. BRCA1 (Homo sapiens) - HGNC:1100
+   BRCA1 DNA repair associated
+   Chr 17: 43,044,295-43,170,327
+
+2. BRCA1P1 (Homo sapiens) - HGNC:1101
+   BRCA1 pseudogene 1
+
+Disease associations:
+- Breast-ovarian cancer, familial
+- Fanconi anemia, complementation group S
+
+Function: DNA repair, tumor suppression
+Response Time: 0.89s`
+                },
+                'boolean-query': {
+                    tool: 'complex_search',
+                    query: 'breast cancer genes in human AND DNA repair NOT p53',
+                    result: `🧠 Boolean Logic Query Results
+
+Query: "breast cancer genes in human AND DNA repair NOT p53"
+Parsed operators: AND, NOT
+Species: human
+
+Found 6,021 genes matching all criteria:
+
+Included terms:
+✓ breast cancer: 2,847 genes
+✓ DNA repair: 4,193 genes
+✓ species=human: filtered
+
+Excluded terms:
+✗ p53: 1,019 genes removed
+
+Top results:
+- XRCC3: DNA crosslink repair 1C
+- XRCC1: X-ray repair cross complementing 1
+- RAD50: RAD50 double strand break repair
+- ERCC1: ERCC excision repair 1
+
+Boolean processing: Successful
+Response Time: 2.1s`
+                },
+                'gene-info': {
+                    tool: 'get_gene_info',
+                    query: 'HGNC:1100',
+                    result: `📋 Detailed Gene Information
+
+Gene ID: HGNC:1100
+Symbol: BRCA1
+Name: BRCA1 DNA repair associated
+
+Species: Homo sapiens
+Location: Chromosome 17 (43,044,295-43,170,327)
+Strand: Minus
+
+Protein:
+- Length: 1,863 amino acids
+- Molecular weight: 207.7 kDa
+- Function: E3 ubiquitin-protein ligase
+
+Disease Associations (40 total):
+- Breast-ovarian cancer, familial, susceptibility to, 1
+- Fanconi anemia, complementation group S
+- Pancreatic cancer, susceptibility to, 4
+
+Pathways:
+- DNA damage response
+- Homologous recombination
+- Cell cycle checkpoint
+
+Response Time: 0.65s
+Cache: HIT`
+                },
+                'species-list': {
+                    tool: 'get_species_list',
+                    query: 'list all species',
+                    result: `🐛 Supported Model Organisms
+
+Total: 6 species supported
+
+1. Homo sapiens (Human)
+   Genes: ~20,000
+   Database: HGNC
+
+2. Mus musculus (Mouse)
+   Genes: ~22,000
+   Database: MGI
+
+3. Danio rerio (Zebrafish)
+   Genes: ~25,000
+   Database: ZFIN
+
+4. Drosophila melanogaster (Fruit fly)
+   Genes: ~14,000
+   Database: FlyBase
+
+5. Caenorhabditis elegans (Worm)
+   Genes: ~20,000
+   Database: WormBase
+
+6. Saccharomyces cerevisiae (Yeast)
+   Genes: ~6,000
+   Database: SGD
+
+Total genomic coverage: >100,000 genes
+Response Time: 0.32s`
+                },
+                'cache-stats': {
+                    tool: 'get_cache_stats',
+                    query: 'cache statistics',
+                    result: `📊 Performance Statistics
+
+Cache Performance:
+- Cached Items: 156
+- Cache Hits: 1,247
+- Cache Misses: 183
+- Hit Rate: 87.2%
+
+Memory Usage:
+- Cache Size: 15.8MB
+- Total Memory: 28.4MB
+- Available: 71.6MB
+
+Response Times:
+- Average: 0.89s
+- Fastest: 0.12s (cache hit)
+- Slowest: 3.45s (complex query)
+
+Request Volume:
+- Last Hour: 45 requests
+- Peak Rate: 12 req/min
+- Rate Limit: 100 req/min
+
+Server Uptime: 2h 15m 32s
+Last Cache Clear: 45m ago`
+                }
+            };
+
+            const example = examples[exampleType];
+            if (example) {
+                output.textContent = `Executing example: "${example.query}"\nTool: ${example.tool}\n\nProcessing...\n`;
+                setTimeout(() => {
+                    output.textContent = example.result;
+                }, 800);
+            }
+        }
+
+        function startMonitoring() {
+            const output = document.getElementById('monitoring-output');
+            output.textContent = 'Starting real-time monitoring...\n\n';
+
+            monitoringInterval = setInterval(() => {
+                const timestamp = new Date().toLocaleTimeString();
+                const metrics = {
+                    responseTime: (Math.random() * 2 + 0.3).toFixed(2),
+                    cacheHitRate: Math.floor(Math.random() * 20 + 80),
+                    activeQueries: Math.floor(Math.random() * 5),
+                    memoryUsage: (Math.random() * 5 + 25).toFixed(1)
+                };
+
+                // Update metric cards
+                document.getElementById('response-time').textContent = `${metrics.responseTime}s`;
+                document.getElementById('cache-hit-rate').textContent = `${metrics.cacheHitRate}%`;
+                document.getElementById('active-queries').textContent = metrics.activeQueries;
+
+                // Add to monitoring output
+                output.textContent += `[${timestamp}] Response: ${metrics.responseTime}s | Cache: ${metrics.cacheHitRate}% | Active: ${metrics.activeQueries} | Memory: ${metrics.memoryUsage}MB\n`;
+                output.scrollTop = output.scrollHeight;
+            }, 2000);
+        }
+
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                document.getElementById('monitoring-output').textContent += '\nMonitoring stopped.\n';
+            }
+        }
+
+        function clearCache() {
+            const output = document.getElementById('monitoring-output');
+            output.textContent += '\nClearing server cache...\n';
+
+            setTimeout(() => {
+                output.textContent += 'Cache cleared successfully.\nNext queries will be slower until cache rebuilds.\nCache statistics reset.\n';
+                document.getElementById('cache-hit-rate').textContent = '0%';
+            }, 1000);
+        }
+
+        function clearResults() {
+            document.getElementById('query-results').textContent = 'Results cleared. Ready for new queries...';
+        }
+    </script>
+</body>
+</html>

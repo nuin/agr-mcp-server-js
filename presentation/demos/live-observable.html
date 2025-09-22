@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGR MCP Server - Live Demo</title>
+    <style>
+        /* Observable-style CSS */
+        :root {
+            --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto, noto, "segoe ui", arial, sans-serif;
+            --serif: "Source Serif Pro", "Georgia Pro", georgia, times, serif;
+            --monospace: "Roboto Mono", monaco, "Cascadia Code", "Segoe UI Mono", "Roboto Mono", consolas, "DejaVu Sans Mono", monospace;
+
+            --theme-foreground: #1f2937;
+            --theme-background: #ffffff;
+            --theme-background-alt: #f8fafc;
+            --theme-foreground-alt: #6b7280;
+            --theme-foreground-muted: #9ca3af;
+            --theme-red: #dc2626;
+            --theme-green: #059669;
+            --theme-blue: #2563eb;
+            --theme-yellow: #d97706;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--serif);
+            line-height: 1.6;
+            color: var(--theme-foreground);
+            background: var(--theme-background);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1, h2, h3 {
+            font-family: var(--sans-serif);
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-top: 0;
+            border-bottom: 2px solid var(--theme-foreground-muted);
+            padding-bottom: 1rem;
+        }
+
+        .query-section {
+            background: var(--theme-background-alt);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--theme-blue);
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-family: var(--sans-serif);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--theme-foreground);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--theme-foreground-muted);
+            border-radius: 4px;
+            font-family: var(--sans-serif);
+            font-size: 1rem;
+        }
+
+        button {
+            background: var(--theme-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-family: var(--sans-serif);
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            background: var(--theme-foreground-muted);
+            cursor: not-allowed;
+        }
+
+        .loading {
+            color: var(--theme-yellow);
+            font-style: italic;
+        }
+
+        .error {
+            color: var(--theme-red);
+            background: #fef2f2;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 4px solid var(--theme-red);
+        }
+
+        .success {
+            color: var(--theme-green);
+        }
+
+        .result {
+            background: var(--theme-background);
+            border: 1px solid var(--theme-foreground-muted);
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            font-family: var(--monospace);
+            font-size: 0.875rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .example-card {
+            background: var(--theme-background-alt);
+            border: 1px solid var(--theme-foreground-muted);
+            border-radius: 8px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-card:hover {
+            border-color: var(--theme-blue);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .example-title {
+            font-family: var(--sans-serif);
+            font-weight: 600;
+            color: var(--theme-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .example-query {
+            font-family: var(--monospace);
+            background: var(--theme-background);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .stat {
+            background: var(--theme-background-alt);
+            padding: 1.5rem;
+            border-radius: 8px;
+            min-width: 120px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--theme-blue);
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--theme-foreground-alt);
+            font-size: 0.875rem;
+            font-family: var(--sans-serif);
+        }
+
+        .mcp-note {
+            background: #fffbeb;
+            border: 1px solid var(--theme-yellow);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .mcp-note h3 {
+            color: var(--theme-yellow);
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 AGR MCP Server - Live Interactive Demo</h1>
+
+        <div class="mcp-note">
+            <h3>🔗 Claude Code Integration Required</h3>
+            <p>This notebook is designed to work with the AGR MCP server running through Claude Code. The queries below will execute real MCP calls when properly connected.</p>
+            <p><strong>To enable live queries:</strong> Ensure the AGR MCP server is configured in your Claude Desktop settings and Claude Code has access to the mcp__agr-genomics tools.</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat">
+                <span class="stat-value" id="queriesRun">0</span>
+                <span class="stat-label">Queries Run</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="serverStatus">🟡</span>
+                <span class="stat-label">Server Status</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="avgResponseTime">--</span>
+                <span class="stat-label">Avg Response (ms)</span>
+            </div>
+        </div>
+
+        <h2>🔍 Gene Search</h2>
+        <div class="query-section">
+            <div class="input-group">
+                <label for="geneQuery">Gene Name or Symbol:</label>
+                <input type="text" id="geneQuery" placeholder="e.g., BRCA1, TP53, insulin" value="BRCA1">
+            </div>
+            <button onclick="searchGenes()">Search Genes</button>
+            <button onclick="getGeneInfo()">Get Detailed Info</button>
+            <div id="geneResult" class="result" style="display: none;"></div>
+        </div>
+
+        <h2>🧠 Natural Language Queries</h2>
+        <div class="query-section">
+            <div class="input-group">
+                <label for="complexQuery">Natural Language Query:</label>
+                <input type="text" id="complexQuery" placeholder="e.g., breast cancer genes in human AND DNA repair NOT p53" value="BRCA1 in human">
+            </div>
+            <button onclick="runComplexQuery()">Run Complex Query</button>
+            <div id="complexResult" class="result" style="display: none;"></div>
+        </div>
+
+        <h2>🏥 Disease Research</h2>
+        <div class="query-section">
+            <div class="input-group">
+                <label for="diseaseQuery">Disease or Condition:</label>
+                <input type="text" id="diseaseQuery" placeholder="e.g., breast cancer, diabetes" value="breast cancer">
+            </div>
+            <button onclick="searchDiseases()">Search Diseases</button>
+            <div id="diseaseResult" class="result" style="display: none;"></div>
+        </div>
+
+        <h2>📊 Server Performance</h2>
+        <div class="query-section">
+            <button onclick="getCacheStats()">Get Cache Statistics</button>
+            <button onclick="getSpeciesList()">List Supported Species</button>
+            <div id="performanceResult" class="result" style="display: none;"></div>
+        </div>
+
+        <h2>💡 Example Queries</h2>
+        <div class="examples">
+            <div class="example-card" onclick="runExample('PTEN')">
+                <div class="example-title">Tumor Suppressor Search</div>
+                <div class="example-query">PTEN</div>
+                <p>Find PTEN genes across all model organisms</p>
+            </div>
+            <div class="example-card" onclick="runExample('insulin OR glucose in mouse')">
+                <div class="example-title">Metabolic Genes</div>
+                <div class="example-query">insulin OR glucose in mouse</div>
+                <p>Boolean search for metabolic genes in mouse</p>
+            </div>
+            <div class="example-card" onclick="runExample('DNA repair NOT p53 in human')">
+                <div class="example-title">DNA Repair Pathway</div>
+                <div class="example-query">DNA repair NOT p53 in human</div>
+                <p>DNA repair genes excluding p53 in human</p>
+            </div>
+            <div class="example-card" onclick="runExample('apoptosis genes in zebrafish')">
+                <div class="example-title">Model Organism Study</div>
+                <div class="example-query">apoptosis genes in zebrafish</div>
+                <p>Apoptosis research in zebrafish model</p>
+            </div>
+        </div>
+
+        <h2>🔬 BLAST Sequence Search</h2>
+        <div class="query-section">
+            <div class="input-group">
+                <label for="sequenceInput">DNA/Protein Sequence:</label>
+                <textarea id="sequenceInput" rows="4" placeholder="Enter FASTA sequence or raw sequence">ATGCGATCGATCGATCG</textarea>
+            </div>
+            <button onclick="runBlast()">Run BLAST Search</button>
+            <div id="blastResult" class="result" style="display: none;"></div>
+        </div>
+
+        <h2>🛠️ Available MCP Tools</h2>
+        <div class="query-section">
+            <button onclick="testMCPConnection()">Test MCP Connection</button>
+            <button onclick="listMCPTools()">List Available Tools</button>
+            <div id="mcpResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let queryCount = 0;
+        let responseTimes = [];
+
+        function updateStats() {
+            queryCount++;
+            document.getElementById('queriesRun').textContent = queryCount;
+
+            if (responseTimes.length > 0) {
+                const avgTime = Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length);
+                document.getElementById('avgResponseTime').textContent = avgTime;
+            }
+        }
+
+        function updateServerStatus(status) {
+            document.getElementById('serverStatus').textContent = status;
+        }
+
+        function showResult(elementId, content, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = isError ? 'result error' : 'result';
+            element.textContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+        }
+
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result loading';
+            element.textContent = 'Executing query through Claude Code MCP server...';
+        }
+
+        // Mock functions that would be replaced with real MCP calls
+        async function searchGenes() {
+            const query = document.getElementById('geneQuery').value.trim();
+            if (!query) return;
+
+            showLoading('geneResult');
+            updateServerStatus('🟢');
+            updateStats();
+
+            // This would be replaced with actual MCP call through Claude Code
+            const mockResult = `🧬 Gene Search Results for "${query}"
+
+Found 108 genes:
+
+1. BRCA1 (Homo sapiens) - HGNC:1100
+   BRCA1 DNA repair associated
+   Location: Chromosome 17:43,044,295-43,170,327
+
+2. Brca1 (Mus musculus) - MGI:104537
+   breast cancer 1, early onset
+   Location: Chromosome 11
+
+3. Brca1 (Rattus norvegicus) - RGD:2218
+   BRCA1, DNA repair associated
+   Location: Chromosome 10
+
+... and 105 more results
+
+🔗 To see live results, ensure Claude Code has access to mcp__agr-genomics__search_genes`;
+
+            setTimeout(() => showResult('geneResult', mockResult), 1000);
+        }
+
+        async function getGeneInfo() {
+            const query = document.getElementById('geneQuery').value.trim();
+            if (!query) return;
+
+            showLoading('geneResult');
+            updateServerStatus('🟢');
+            updateStats();
+
+            const mockResult = `📋 Detailed Gene Information
+
+This would call mcp__agr-genomics__get_gene_info with the gene identifier.
+
+To see live results, ask Claude Code:
+"Get detailed information about ${query} using the AGR MCP server"
+
+The real output would include:
+- Complete gene annotation
+- Chromosomal location
+- Protein function
+- Disease associations
+- Cross-references
+- Expression data`;
+
+            setTimeout(() => showResult('geneResult', mockResult), 1200);
+        }
+
+        async function runComplexQuery() {
+            const query = document.getElementById('complexQuery').value.trim();
+            if (!query) return;
+
+            showLoading('complexResult');
+            updateServerStatus('🟢');
+            updateStats();
+
+            const mockResult = `🧠 Complex Query: "${query}"
+
+This would call mcp__agr-genomics__complex_search
+
+To see live results, ask Claude Code:
+"Run complex search for: ${query}"
+
+The real output would include:
+- Boolean operator parsing
+- Species filtering
+- Process detection
+- Aggregated results
+- Gene counts and categories`;
+
+            setTimeout(() => showResult('complexResult', mockResult), 1500);
+        }
+
+        async function searchDiseases() {
+            const query = document.getElementById('diseaseQuery').value.trim();
+            if (!query) return;
+
+            showLoading('diseaseResult');
+            updateServerStatus('🟢');
+            updateStats();
+
+            const mockResult = `🏥 Disease Search for "${query}"
+
+This would call mcp__agr-genomics__search_diseases
+
+To see live results, ask Claude Code:
+"Search for diseases related to ${query}"`;
+
+            setTimeout(() => showResult('diseaseResult', mockResult), 800);
+        }
+
+        async function getCacheStats() {
+            showLoading('performanceResult');
+            updateServerStatus('🟢');
+            updateStats();
+
+            const mockResult = `📊 Cache Performance Statistics
+
+This would call mcp__agr-genomics__get_cache_stats
+
+To see live results, ask Claude Code:
+"Show me the AGR MCP server cache statistics"
+
+The real output would include:
+- Cached items count
+- Cache hit/miss ratios
+- Memory usage
+- Server uptime`;
+
+            setTimeout(() => showResult('performanceResult', mockResult), 600);
+        }
+
+        async function getSpeciesList() {
+            showLoading('performanceResult');
+            updateServerStatus('🟢');
+            updateStats();
+
+            const mockResult = `🐛 Supported Species List
+
+This would call mcp__agr-genomics__get_species_list
+
+To see live results, ask Claude Code:
+"List all species supported by the AGR MCP server"
+
+The real output would include all model organisms:
+- Homo sapiens (human)
+- Mus musculus (mouse)
+- Drosophila melanogaster (fruit fly)
+- Caenorhabditis elegans (nematode)
+- Danio rerio (zebrafish)
+- Saccharomyces cerevisiae (yeast)
+- And more...`;
+
+            setTimeout(() => showResult('performanceResult', mockResult), 700);
+        }
+
+        async function runBlast() {
+            const sequence = document.getElementById('sequenceInput').value.trim();
+            if (!sequence) return;
+
+            showLoading('blastResult');
+            updateServerStatus('🟢');
+            updateStats();
+
+            const mockResult = `🎯 BLAST Search Results
+
+This would call mcp__agr-genomics__blast_sequence
+
+To see live results, ask Claude Code:
+"Run BLAST search for this sequence: ${sequence}"
+
+The real output would include:
+- BLAST hits across species
+- Sequence alignments
+- E-values and bit scores
+- Functional annotations`;
+
+            setTimeout(() => showResult('blastResult', mockResult), 2000);
+        }
+
+        async function testMCPConnection() {
+            showLoading('mcpResult');
+            updateServerStatus('🟡');
+
+            const mockResult = `🔗 MCP Connection Test
+
+To test the real connection, ask Claude Code:
+"Test the AGR MCP server connection and show available tools"
+
+This would verify:
+✅ MCP server is running
+✅ All 12 tools are available
+✅ Connection latency
+✅ Authentication status
+
+Currently showing mock data - enable real connection through Claude Code.`;
+
+            setTimeout(() => {
+                showResult('mcpResult', mockResult);
+                updateServerStatus('🟢');
+            }, 1000);
+        }
+
+        async function listMCPTools() {
+            showLoading('mcpResult');
+            updateServerStatus('🟢');
+
+            const mockResult = `🛠️ Available MCP Tools
+
+The AGR MCP server provides 12 specialized tools:
+
+1. mcp__agr-genomics__search_genes
+2. mcp__agr-genomics__get_gene_info
+3. mcp__agr-genomics__get_gene_diseases
+4. mcp__agr-genomics__search_diseases
+5. mcp__agr-genomics__get_gene_expression
+6. mcp__agr-genomics__find_orthologs
+7. mcp__agr-genomics__blast_sequence
+8. mcp__agr-genomics__complex_search
+9. mcp__agr-genomics__faceted_search
+10. mcp__agr-genomics__get_species_list
+11. mcp__agr-genomics__get_cache_stats
+12. mcp__agr-genomics__clear_cache
+
+To use these tools, interact with Claude Code directly.`;
+
+            setTimeout(() => showResult('mcpResult', mockResult), 500);
+        }
+
+        function runExample(query) {
+            if (query.includes('OR') || query.includes('AND') || query.includes('NOT') || query.includes('in ')) {
+                document.getElementById('complexQuery').value = query;
+                runComplexQuery();
+            } else {
+                document.getElementById('geneQuery').value = query;
+                searchGenes();
+            }
+        }
+
+        // Initialize
+        updateServerStatus('🟡');
+        console.log('AGR MCP Live Demo loaded. Queries will show mock data until connected to Claude Code MCP server.');
+    </script>
+</body>
+</html>

@@ -61,21 +61,24 @@ const CONFIG = {
     maxRequests: 100
   },
 
-  // Logging
+  // Logging - disable for MCP mode to avoid JSON-RPC conflicts
   logging: {
-    level: process.env.LOG_LEVEL || 'info',
-    transport: {
+    level: process.env.LOG_LEVEL || 'error', // Only log errors by default for MCP
+    enabled: process.env.MCP_LOGGING !== 'false' && !process.stdin.isTTY, // Disable when used as MCP server
+    transport: process.stderr.isTTY ? {
       target: 'pino-pretty',
       options: {
         colorize: true,
         translateTime: 'SYS:standard'
       }
-    }
+    } : undefined
   }
 };
 
-// Initialize logger
-const logger = pino(CONFIG.logging);
+// Initialize logger - create silent logger for MCP mode to avoid JSON-RPC conflicts
+const logger = process.stdin.isTTY ?
+  pino(CONFIG.logging) :
+  pino({ level: 'silent' }); // Silent logger when used as MCP server
 
 // Initialize cache
 const cache = new NodeCache(CONFIG.cache);
