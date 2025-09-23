@@ -184,7 +184,69 @@ class SimpleAGRClient {
   }
 
   async getSpeciesList() {
-    return this.request('/species');
+    // Return the known Alliance model organisms
+    return {
+      results: [
+        {
+          id: 'NCBITaxon:9606',
+          name: 'Homo sapiens',
+          shortName: 'Hsa',
+          commonNames: ['human', 'hsa'],
+          dataProvider: 'HGNC'
+        },
+        {
+          id: 'NCBITaxon:10090',
+          name: 'Mus musculus',
+          shortName: 'Mmu',
+          commonNames: ['mouse', 'mmu'],
+          dataProvider: 'MGI'
+        },
+        {
+          id: 'NCBITaxon:10116',
+          name: 'Rattus norvegicus',
+          shortName: 'Rno',
+          commonNames: ['rat', 'rno'],
+          dataProvider: 'RGD'
+        },
+        {
+          id: 'NCBITaxon:7955',
+          name: 'Danio rerio',
+          shortName: 'Dre',
+          commonNames: ['zebrafish', 'dre'],
+          dataProvider: 'ZFIN'
+        },
+        {
+          id: 'NCBITaxon:7227',
+          name: 'Drosophila melanogaster',
+          shortName: 'Dme',
+          commonNames: ['fly', 'dme'],
+          dataProvider: 'FlyBase'
+        },
+        {
+          id: 'NCBITaxon:6239',
+          name: 'Caenorhabditis elegans',
+          shortName: 'Cel',
+          commonNames: ['worm', 'cel'],
+          dataProvider: 'WormBase'
+        },
+        {
+          id: 'NCBITaxon:559292',
+          name: 'Saccharomyces cerevisiae',
+          shortName: 'Sce',
+          commonNames: ['yeast', 'sce'],
+          dataProvider: 'SGD'
+        },
+        {
+          id: 'NCBITaxon:8364',
+          name: 'Xenopus tropicalis',
+          shortName: 'Xtr',
+          commonNames: ['xenopus', 'xtr'],
+          dataProvider: 'Xenbase'
+        }
+      ],
+      total: 8,
+      returnedRecords: 8
+    };
   }
 }
 
