@@ -70,21 +70,28 @@ const CONFIG = {
     maxRequests: 100
   },
 
-  // Logging
+  // Logging - CRITICAL: Minimal logging to avoid corrupting MCP stdio protocol
   logging: {
-    level: process.env.LOG_LEVEL || 'info',
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'SYS:standard'
-      }
-    }
+    level: process.env.LOG_LEVEL || 'error' // Default to error-only for MCP mode
   }
 };
 
-// Initialize logger
-const logger = pino(CONFIG.logging);
+// Initialize logger - CRITICAL: Write to stderr for MCP stdio protocol compatibility
+// When using pino-pretty, we must be careful not to pollute stdout
+const logger = pino(
+  {
+    level: CONFIG.logging.level,
+    transport: process.env.NODE_ENV === 'development' ? {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'SYS:standard',
+        destination: 2 // Write to stderr
+      }
+    } : undefined
+  },
+  pino.destination({ dest: 2, sync: false }) // Always write to stderr (fd 2)
+);
 
 // Initialize cache
 const cache = new NodeCache(CONFIG.cache);
@@ -690,10 +697,10 @@ class EnhancedAGRClient {
    */
   async complexSearch(query, options = {}) {
     try {
-      console.log('DEBUG: Starting complexSearch with query:', query);
+      logger.debug({ query }, 'Starting complexSearch');
       const parsed = this.parseComplexQuery(query);
-      console.log('DEBUG: Parsed query:', parsed);
-      
+      logger.debug({ parsed }, 'Query parsed');
+
       const results = {
         query: query,
         parsed: parsed,
@@ -735,18 +742,18 @@ class EnhancedAGRClient {
     await Promise.all(searchPromises);
 
     // Compute aggregations across results
-    console.log('DEBUG: Computing aggregations on entities:', Object.keys(results.entities));
+    logger.debug({ entityTypes: Object.keys(results.entities) }, 'Computing aggregations');
     results.aggregations = this.computeAggregations(results.entities);
-    console.log('DEBUG: Aggregations computed successfully');
+    logger.debug('Aggregations computed successfully');
 
     // Find relationships between entities
-    console.log('DEBUG: Finding relationships');
+    logger.debug('Finding relationships');
     results.relationships = await this.findRelationships(results.entities);
 
-    console.log('DEBUG: Returning complex search results');
+    logger.debug('Returning complex search results');
     return results;
     } catch (error) {
-      console.error('DEBUG: Error in complexSearch:', error.message, error.stack);
+      logger.error({ message: error.message, stack: error.stack }, 'Error in complexSearch');
       throw error;
     }
   }
@@ -794,15 +801,15 @@ class EnhancedAGRClient {
         
         // Species distribution
         const speciesAgg = geneAggs.find(a => a?.key === 'species');
-        console.debug('DEBUG: speciesAgg found:', { speciesAgg, hasValues: !!speciesAgg?.values, isArray: Array.isArray(speciesAgg?.values) });
+        logger.debug({ hasSpeciesAgg: !!speciesAgg, hasValues: !!speciesAgg?.values, isArray: Array.isArray(speciesAgg?.values) }, 'Processing species aggregation');
         if (speciesAgg?.values && Array.isArray(speciesAgg.values)) {
-          console.debug('DEBUG: About to forEach on speciesAgg.values:', speciesAgg.values.length);
+          logger.debug({ valuesLength: speciesAgg.values.length }, 'Processing species values');
           speciesAgg.values.forEach(v => {
             if (v?.key && typeof v.total === 'number') {
               aggregations.topSpecies[v.key] = v.total;
             }
           });
-          console.debug('DEBUG: forEach completed successfully');
+          logger.debug('Species aggregation completed');
         }
 
         // Disease associations
