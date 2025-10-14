@@ -2,7 +2,7 @@
 
 /**
  * Super Simple AGR MCP Server - Natural Language Only
- * 
+ *
  * Just one tool: ask anything in plain English about genomics
  */
 
@@ -42,48 +42,48 @@ class SimpleAGRClient {
    */
   parseIntent(query) {
     const lower = query.toLowerCase();
-    
+
     // Extract gene names/symbols (common patterns)
     const geneMatch = query.match(/\b([A-Z][A-Z0-9]+\d*|[a-z]+\d+|HGNC:\d+|MGI:\d+|RGD:\d+)\b/);
     const possibleGene = geneMatch ? geneMatch[1] : null;
-    
+
     // Intent detection
     if (lower.includes('disease') || lower.includes('cancer') || lower.includes('syndrome')) {
       return { intent: 'diseases', gene: possibleGene, query };
     }
-    
+
     if (lower.includes('ortholog') || lower.includes('homolog') || lower.includes('mouse') || lower.includes('human')) {
       return { intent: 'orthologs', gene: possibleGene, query };
     }
-    
+
     if (lower.includes('expression') || lower.includes('tissue') || lower.includes('where')) {
       return { intent: 'expression', gene: possibleGene, query };
     }
-    
-    if (lower.includes('literature') || lower.includes('papers') || lower.includes('publications') || 
-        lower.includes('research') || lower.includes('pubmed') || lower.includes('articles')) {
+
+    if (lower.includes('literature') || lower.includes('papers') || lower.includes('publications')
+        || lower.includes('research') || lower.includes('pubmed') || lower.includes('articles')) {
       return { intent: 'literature', gene: possibleGene, query };
     }
-    
-    if (lower.includes('relationships') || lower.includes('interactions') || lower.includes('related genes') ||
-        lower.includes('co-occurrence') || lower.includes('partners')) {
+
+    if (lower.includes('relationships') || lower.includes('interactions') || lower.includes('related genes')
+        || lower.includes('co-occurrence') || lower.includes('partners')) {
       return { intent: 'gene_relationships', gene: possibleGene, query };
     }
-    
-    if (lower.includes('trends') || lower.includes('over time') || lower.includes('publications by year') ||
-        lower.includes('research trends')) {
+
+    if (lower.includes('trends') || lower.includes('over time') || lower.includes('publications by year')
+        || lower.includes('research trends')) {
       return { intent: 'research_trends', gene: possibleGene, query };
     }
-    
+
     if (lower.includes('detail') || lower.includes('info') || lower.includes('about') || possibleGene) {
       return { intent: 'gene_info', gene: possibleGene, query };
     }
-    
-    if (lower.includes('and') || lower.includes('or') || lower.includes('not') || 
-        lower.includes('but') || lower.includes('except')) {
+
+    if (lower.includes('and') || lower.includes('or') || lower.includes('not')
+        || lower.includes('but') || lower.includes('except')) {
       return { intent: 'complex_search', query };
     }
-    
+
     // Default to gene search
     return { intent: 'search', query };
   }
@@ -99,7 +99,7 @@ class SimpleAGRClient {
             const diseaseData = await this.request(`/gene/${encodeURIComponent(gene)}/diseases`);
             return {
               type: 'diseases',
-              gene: gene,
+              gene,
               diseases: diseaseData.results || [],
               summary: `Found ${(diseaseData.results || []).length} diseases associated with ${gene}`
             };
@@ -117,31 +117,31 @@ class SimpleAGRClient {
               summary: `Found ${searchData.total || 0} diseases matching "${query}"`
             };
           }
-          
+
         case 'orthologs':
           if (gene) {
             const orthData = await this.request(`/gene/${encodeURIComponent(gene)}/orthologs`);
             return {
               type: 'orthologs',
-              gene: gene,
+              gene,
               orthologs: orthData.results || [],
               summary: `Found ${(orthData.results || []).length} orthologs for ${gene}`
             };
           }
           break;
-          
+
         case 'expression':
           if (gene) {
             const exprData = await this.request(`/gene/${encodeURIComponent(gene)}/expression`);
             return {
               type: 'expression',
-              gene: gene,
+              gene,
               expression: exprData.results || [],
               summary: `Found expression data for ${gene} across ${(exprData.results || []).length} conditions`
             };
           }
           break;
-          
+
         case 'gene_info':
           if (gene) {
             const geneData = await this.request(`/gene/${encodeURIComponent(gene)}`);
@@ -152,7 +152,7 @@ class SimpleAGRClient {
             };
           }
           break;
-          
+
         case 'complex_search':
           return await this.complexSearch(query);
 
@@ -164,7 +164,7 @@ class SimpleAGRClient {
             });
             return {
               type: 'literature',
-              gene: gene,
+              gene,
               papers: litResult.papers.map(p => ({
                 title: p.title,
                 authors: p.authors,
@@ -203,7 +203,7 @@ class SimpleAGRClient {
             });
             return {
               type: 'research_trends',
-              gene: gene,
+              gene,
               totalPublications: trendsResult.totalPublications,
               trendDirection: trendsResult.trendDirection,
               yearlyData: trendsResult.yearlyData,
@@ -211,9 +211,9 @@ class SimpleAGRClient {
             };
           }
           break;
-          
+
         case 'search':
-        default:
+        default: {
           const searchData = await this.request('/search', {
             q: query,
             category: 'gene',
@@ -221,7 +221,7 @@ class SimpleAGRClient {
           });
           return {
             type: 'search',
-            query: query,
+            query,
             results: (searchData.results || []).map(gene => ({
               symbol: gene.symbol,
               name: gene.name,
@@ -231,12 +231,13 @@ class SimpleAGRClient {
             total: searchData.total || 0,
             summary: `Found ${searchData.total || 0} genes matching "${query}"`
           };
+        }
       }
     } catch (error) {
       return {
         type: 'error',
         error: error.message,
-        query: query,
+        query,
         suggestion: 'Try rephrasing your question or use simpler terms'
       };
     }
@@ -248,7 +249,7 @@ class SimpleAGRClient {
   async complexSearch(query) {
     const parsed = this.parseComplexQuery(query);
     const searchQuery = this.buildQuery(parsed);
-    
+
     const params = {
       q: searchQuery,
       category: 'gene',
@@ -260,11 +261,11 @@ class SimpleAGRClient {
     }
 
     const response = await this.request('/search', params);
-    
+
     return {
       type: 'complex_search',
-      query: query,
-      searchQuery: searchQuery,
+      query,
+      searchQuery,
       total: response.total || 0,
       results: (response.results || []).slice(0, 15).map(gene => ({
         symbol: gene.symbol || 'Unknown',
@@ -294,18 +295,18 @@ class SimpleAGRClient {
     const speciesMatch = query.match(/\\bin\\s+(human|mouse|zebrafish|rat|worm|fly|yeast)/i);
     if (speciesMatch) {
       const speciesMap = {
-        'human': 'Homo sapiens',
-        'mouse': 'Mus musculus', 
-        'zebrafish': 'Danio rerio',
-        'rat': 'Rattus norvegicus',
-        'worm': 'Caenorhabditis elegans',
-        'fly': 'Drosophila melanogaster',
-        'yeast': 'Saccharomyces cerevisiae'
+        human: 'Homo sapiens',
+        mouse: 'Mus musculus',
+        zebrafish: 'Danio rerio',
+        rat: 'Rattus norvegicus',
+        worm: 'Caenorhabditis elegans',
+        fly: 'Drosophila melanogaster',
+        yeast: 'Saccharomyces cerevisiae'
       };
       parsed.species = speciesMap[speciesMatch[1].toLowerCase()];
     }
 
-    let cleanQuery = query
+    const cleanQuery = query
       .replace(/\\b(AND|OR|NOT|and|or|not|but|except)\\b/gi, ' ')
       .replace(/\\bin\\s+(human|mouse|zebrafish|rat|worm|fly|yeast)/gi, '')
       .replace(/\\b(genes?|gene)\\b/gi, '')
@@ -321,22 +322,22 @@ class SimpleAGRClient {
   buildQuery(parsed) {
     if (parsed.hasNot) {
       let positiveTerms = [...parsed.terms];
-      let negativeTerms = [];
-      
+      const negativeTerms = [];
+
       if (positiveTerms.includes('p53')) {
         negativeTerms.push('p53');
         positiveTerms = positiveTerms.filter(term => term !== 'p53');
       }
-      
+
       if (negativeTerms.length > 0) {
         return `${positiveTerms.join(' ')} NOT ${negativeTerms.join(' ')}`;
       }
     }
-    
+
     if (parsed.operators.includes('OR')) {
       return `(${parsed.terms.join(' OR ')})`;
     }
-    
+
     return parsed.terms.join(' ');
   }
 
@@ -346,15 +347,15 @@ class SimpleAGRClient {
   async processNaturalQuery(userQuery) {
     // Parse user intent
     const { intent, gene, query } = this.parseIntent(userQuery);
-    
+
     // Execute the appropriate action
     const result = await this.executeIntent(intent, query, gene);
-    
+
     // Add helpful context
     result.originalQuery = userQuery;
     result.detectedIntent = intent;
     result.timestamp = new Date().toISOString();
-    
+
     return result;
   }
 }
@@ -366,7 +367,7 @@ const agrClient = new SimpleAGRClient();
 const literatureMiningClient = new LiteratureMiningClient({
   email: 'agr-mcp-simple@example.com',
   tool: 'AGR-MCP-Simple',
-  retmax: 50  // Smaller limit for simple interface
+  retmax: 50 // Smaller limit for simple interface
 });
 
 // Create MCP server
@@ -411,7 +412,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (name === 'ask') {
     try {
       const result = await agrClient.processNaturalQuery(args.question);
-      
+
       return {
         content: [
           {
@@ -457,12 +458,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start server
 async function main() {
-  console.log('Starting Simple Natural Language AGR MCP Server...');
-  
+  // Silent startup - no stdout pollution for MCP protocol
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  
-  console.log('Simple Natural Language AGR MCP Server started');
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

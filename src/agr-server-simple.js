@@ -2,7 +2,7 @@
 
 /**
  * Simple AGR MCP Server - Minimal Implementation
- * 
+ *
  * A streamlined MCP server for Alliance of Genome Resources with basic functionality
  */
 
@@ -60,15 +60,15 @@ class SimpleAGRClient {
     const speciesMatch = query.match(/\bin\s+(human|mouse|zebrafish)/i);
     if (speciesMatch) {
       const speciesMap = {
-        'human': 'Homo sapiens',
-        'mouse': 'Mus musculus',
-        'zebrafish': 'Danio rerio'
+        human: 'Homo sapiens',
+        mouse: 'Mus musculus',
+        zebrafish: 'Danio rerio'
       };
       parsed.species = speciesMap[speciesMatch[1].toLowerCase()];
     }
 
     // Clean and extract terms
-    let cleanQuery = query
+    const cleanQuery = query
       .replace(/\b(AND|OR|NOT)\b/gi, ' ')
       .replace(/\bin\s+(human|mouse|zebrafish)/gi, '')
       .replace(/\b(genes?|gene)\b/gi, '')
@@ -87,22 +87,22 @@ class SimpleAGRClient {
   buildQuery(parsed) {
     if (parsed.hasNot) {
       let positiveTerms = [...parsed.terms];
-      let negativeTerms = [];
-      
+      const negativeTerms = [];
+
       if (positiveTerms.includes('p53')) {
         negativeTerms.push('p53');
         positiveTerms = positiveTerms.filter(term => term !== 'p53');
       }
-      
+
       if (negativeTerms.length > 0) {
         return `${positiveTerms.join(' ')} NOT ${negativeTerms.join(' ')}`;
       }
     }
-    
+
     if (parsed.operators.includes('OR')) {
       return `(${parsed.terms.join(' OR ')})`;
     }
-    
+
     return parsed.terms.join(' ');
   }
 
@@ -113,7 +113,7 @@ class SimpleAGRClient {
     try {
       const parsed = this.parseComplexQuery(query);
       const searchQuery = this.buildQuery(parsed);
-      
+
       const params = {
         q: searchQuery,
         category: 'gene',
@@ -125,11 +125,11 @@ class SimpleAGRClient {
       }
 
       const response = await this.request('/search', params);
-      
+
       // Return MCP-safe simplified structure
       return {
-        query: query,
-        searchQuery: searchQuery,
+        query,
+        searchQuery,
         total: response.total || 0,
         results: (response.results || []).slice(0, limit).map(gene => ({
           symbol: gene.symbol || 'Unknown',
@@ -144,7 +144,7 @@ class SimpleAGRClient {
     } catch (error) {
       return {
         error: error.message,
-        query: query
+        query
       };
     }
   }
@@ -155,7 +155,7 @@ class SimpleAGRClient {
       category: 'gene',
       limit: Math.min(limit, 100)
     });
-    
+
     return {
       total: response.total || 0,
       results: (response.results || []).slice(0, limit).map(gene => ({
@@ -381,12 +381,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start server
 async function main() {
-  console.log('Starting Simple AGR MCP Server...');
-  
+  // Silent startup - no stdout pollution for MCP protocol
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  
-  console.log('Simple AGR MCP Server started');
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
