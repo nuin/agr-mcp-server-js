@@ -151,10 +151,10 @@ export class FunctionalEnrichmentClient {
    */
   mapDatabaseName(database) {
     const mapping = {
-      'go': 'GO_Biological_Process',
-      'kegg': 'KEGG_2021_Human',
-      'reactome': 'Reactome_2022',
-      'hallmark': 'MSigDB_Hallmark_2020'
+      go: 'GO_Biological_Process',
+      kegg: 'KEGG_2021_Human',
+      reactome: 'Reactome_2022',
+      hallmark: 'MSigDB_Hallmark_2020'
     };
     return mapping[database.toLowerCase()] || database;
   }

@@ -1,10 +1,27 @@
-#!/usr/bin/env -S node --no-experimental-detect-module
+#!/usr/bin/env node
 
 /**
  * Super Simple AGR MCP Server - Natural Language Only
  *
  * Just one tool: ask anything in plain English about genomics
  */
+
+// CRITICAL: Disable Node v23's experimental-detect-module before any imports
+// This must run before any ESM imports or stdin will be treated as code to evaluate
+if (parseInt(process.versions.node.split('.')[0]) >= 23) {
+  process.env.NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ' --no-experimental-detect-module';
+
+  // If we haven't set the flag yet, re-exec with the flag
+  if (!process.execArgv.includes('--no-experimental-detect-module')) {
+    const { spawn } = await import('child_process');
+    const child = spawn(process.execPath, ['--no-experimental-detect-module', ...process.execArgv, process.argv[1], ...process.argv.slice(2)], {
+      stdio: 'inherit'
+    });
+    child.on('exit', (code) => process.exit(code || 0));
+    // Don't continue - let the re-exec handle it
+    await new Promise(() => {});
+  }
+}
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';

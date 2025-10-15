@@ -23,7 +23,7 @@ class NLPServer {
         }
       }
     );
-    
+
     this.nlpProcessor = new ScientificNLPProcessor();
     this.conversationHistory = [];
     this.setupHandlers();
@@ -32,7 +32,7 @@ class NLPServer {
   setupHandlers() {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      
+
       try {
         switch (name) {
           case 'process_natural_query':
@@ -109,11 +109,11 @@ class NLPServer {
 
   async processNaturalQuery(args) {
     const { query, conversation_id } = args;
-    
+
     console.log(`🧠 Processing natural language query: "${query}"`);
-    
+
     const result = await this.nlpProcessor.processQuery(query);
-    
+
     // Store in conversation history
     const conversationEntry = {
       id: conversation_id || this.generateConversationId(),
@@ -121,9 +121,9 @@ class NLPServer {
       query,
       result
     };
-    
+
     this.conversationHistory.push(conversationEntry);
-    
+
     return {
       content: [
         {
@@ -142,20 +142,20 @@ class NLPServer {
 
   async continueConversation(args) {
     const { query, conversation_id } = args;
-    
+
     // Find conversation history
-    const history = this.conversationHistory.filter(entry => 
+    const history = this.conversationHistory.filter(entry =>
       entry.id === conversation_id
     );
-    
+
     if (history.length === 0) {
       throw new Error(`Conversation ${conversation_id} not found`);
     }
-    
+
     console.log(`🗣️ Continuing conversation ${conversation_id}: "${query}"`);
-    
+
     const result = await this.nlpProcessor.handleFollowUp(query, history);
-    
+
     // Add to history
     this.conversationHistory.push({
       id: conversation_id,
@@ -164,7 +164,7 @@ class NLPServer {
       result,
       isFollowUp: true
     });
-    
+
     return {
       content: [
         {
@@ -183,11 +183,11 @@ class NLPServer {
 
   async explainUnderstanding(args) {
     const { query } = args;
-    
+
     console.log(`🔍 Explaining understanding of: "${query}"`);
-    
+
     const result = await this.nlpProcessor.processQuery(query);
-    
+
     const explanation = {
       originalQuery: query,
       semanticBreakdown: {
@@ -211,7 +211,7 @@ class NLPServer {
         '7. Generate natural language response'
       ]
     };
-    
+
     return {
       content: [
         {

@@ -13,23 +13,23 @@ import axios from 'axios';
 export class ScientificNLPProcessor {
   constructor() {
     this.baseURL = 'https://www.alliancegenome.org/api';
-    
+
     // Biological entity patterns
     this.genePatterns = /\b([A-Z][A-Z0-9]{2,}|[A-Z][a-z]+\d*)\b/g;
     this.speciesPatterns = {
-      'human': 'Homo sapiens',
-      'humans': 'Homo sapiens',
-      'mouse': 'Mus musculus', 
-      'mice': 'Mus musculus',
-      'rat': 'Rattus norvegicus',
-      'rats': 'Rattus norvegicus',
-      'zebrafish': 'Danio rerio',
-      'fly': 'Drosophila melanogaster',
-      'flies': 'Drosophila melanogaster',
-      'worm': 'Caenorhabditis elegans',
-      'yeast': 'Saccharomyces cerevisiae'
+      human: 'Homo sapiens',
+      humans: 'Homo sapiens',
+      mouse: 'Mus musculus',
+      mice: 'Mus musculus',
+      rat: 'Rattus norvegicus',
+      rats: 'Rattus norvegicus',
+      zebrafish: 'Danio rerio',
+      fly: 'Drosophila melanogaster',
+      flies: 'Drosophila melanogaster',
+      worm: 'Caenorhabditis elegans',
+      yeast: 'Saccharomyces cerevisiae'
     };
-    
+
     // Intent patterns
     this.intentPatterns = {
       search: /\b(find|search|show|get|look for|identify)\b/i,
@@ -40,16 +40,16 @@ export class ScientificNLPProcessor {
       disease: /\b(disease|cancer|disorder|syndrome|condition)\b/i,
       function: /\b(function|role|purpose|does|mechanism)\b/i
     };
-    
-    // Biological context patterns  
+
+    // Biological context patterns
     this.biologicalContexts = {
       'DNA repair': ['repair', 'damage', 'fix', 'restoration'],
       'cell cycle': ['division', 'mitosis', 'cycle', 'proliferation'],
-      'apoptosis': ['death', 'suicide', 'programmed death'],
-      'transcription': ['expression', 'transcribe', 'RNA'],
-      'metabolism': ['metabolic', 'energy', 'pathway'],
-      'development': ['embryonic', 'developmental', 'growth'],
-      'immune': ['immunity', 'defense', 'response']
+      apoptosis: ['death', 'suicide', 'programmed death'],
+      transcription: ['expression', 'transcribe', 'RNA'],
+      metabolism: ['metabolic', 'energy', 'pathway'],
+      development: ['embryonic', 'developmental', 'growth'],
+      immune: ['immunity', 'defense', 'response']
     };
   }
 
@@ -60,23 +60,23 @@ export class ScientificNLPProcessor {
     try {
       // Parse natural language into structured components
       const semanticParse = this.parseSemantics(naturalQuery);
-      
+
       // Extract biological entities
       const entities = this.extractBiologicalEntities(naturalQuery);
-      
+
       // Understand intent and context
       const intent = this.detectIntent(naturalQuery);
       const context = this.inferBiologicalContext(naturalQuery);
-      
+
       // Build structured query
       const structuredQuery = this.buildStructuredQuery(semanticParse, entities, intent, context);
-      
+
       // Execute with appropriate method
       const results = await this.executeSemanticQuery(structuredQuery);
-      
+
       // Generate natural language response
       const nlResponse = this.generateNaturalResponse(results, intent, naturalQuery);
-      
+
       return {
         originalQuery: naturalQuery,
         understanding: {
@@ -89,7 +89,7 @@ export class ScientificNLPProcessor {
         results,
         naturalLanguageResponse: nlResponse
       };
-      
+
     } catch (error) {
       return {
         error: `NLP processing failed: ${error.message}`,
@@ -103,10 +103,10 @@ export class ScientificNLPProcessor {
    */
   parseSemantics(query) {
     const lowercaseQuery = query.toLowerCase();
-    
+
     return {
       subject: this.extractSubject(query),
-      predicate: this.extractPredicate(query), 
+      predicate: this.extractPredicate(query),
       object: this.extractObject(query),
       modifiers: this.extractModifiers(query),
       negations: this.extractNegations(query),
@@ -125,25 +125,25 @@ export class ScientificNLPProcessor {
       processes: [],
       functions: []
     };
-    
+
     // Extract genes
     const geneMatches = query.match(this.genePatterns) || [];
     entities.genes = [...new Set(geneMatches.filter(g => g.length > 2))];
-    
+
     // Extract species
     Object.entries(this.speciesPatterns).forEach(([common, scientific]) => {
       if (query.toLowerCase().includes(common)) {
         entities.species.push(scientific);
       }
     });
-    
+
     // Extract biological processes
     Object.entries(this.biologicalContexts).forEach(([process, keywords]) => {
       if (keywords.some(keyword => query.toLowerCase().includes(keyword))) {
         entities.processes.push(process);
       }
     });
-    
+
     return entities;
   }
 
@@ -165,23 +165,23 @@ export class ScientificNLPProcessor {
   inferBiologicalContext(query) {
     const contexts = [];
     const lowercaseQuery = query.toLowerCase();
-    
+
     // Detect biological processes
     Object.entries(this.biologicalContexts).forEach(([process, keywords]) => {
       if (keywords.some(keyword => lowercaseQuery.includes(keyword))) {
         contexts.push(process);
       }
     });
-    
+
     // Detect relationship context
     if (/\b(interact|bind|regulate|control|affect)\b/i.test(query)) {
       contexts.push('protein interaction');
     }
-    
+
     if (/\b(upstream|downstream|pathway|cascade)\b/i.test(query)) {
       contexts.push('signaling pathway');
     }
-    
+
     return contexts;
   }
 
@@ -235,7 +235,7 @@ export class ScientificNLPProcessor {
    */
   buildStructuredQuery(semantics, entities, intent, context) {
     let query = '';
-    
+
     // Build based on intent
     switch (intent) {
       case 'search':
@@ -250,31 +250,31 @@ export class ScientificNLPProcessor {
       default:
         query = this.buildGeneralQuery(entities);
     }
-    
+
     // Apply negations
     if (semantics.negations.length > 0) {
       query += ' NOT ' + semantics.negations.join(' NOT ');
     }
-    
+
     // Apply species filter
     if (entities.species.length > 0) {
       query += ` in ${entities.species[0]}`;
     }
-    
+
     return query.trim();
   }
 
   buildSearchQuery(entities, context) {
-    let parts = [];
-    
+    const parts = [];
+
     if (entities.genes.length > 0) {
       parts.push(entities.genes.join(' OR '));
     }
-    
+
     if (context.length > 0) {
       parts.push(context.join(' '));
     }
-    
+
     return parts.join(' AND ');
   }
 
@@ -307,7 +307,7 @@ export class ScientificNLPProcessor {
           offset: 0
         }
       });
-      
+
       return {
         entities: {
           genes: {
@@ -326,20 +326,20 @@ export class ScientificNLPProcessor {
    */
   generateNaturalResponse(results, intent, originalQuery) {
     if (!results || !results.entities) {
-      return "I couldn't find any relevant results for your query.";
+      return 'I couldn\'t find any relevant results for your query.';
     }
 
     const totalResults = results.entities.genes?.total || 0;
     const topResults = results.entities.genes?.results || [];
-    
+
     let response = '';
-    
+
     switch (intent) {
       case 'search':
         response = `I found ${totalResults} genes related to your query. `;
         break;
       case 'function':
-        response = `Here's what I found about the function of these genes: `;
+        response = 'Here\'s what I found about the function of these genes: ';
         break;
       case 'relationship':
         response = `I discovered ${totalResults} potential relationships. `;
@@ -347,15 +347,15 @@ export class ScientificNLPProcessor {
       default:
         response = `Your search returned ${totalResults} results. `;
     }
-    
+
     if (topResults.length > 0) {
-      response += `The top matches include: `;
-      const topGenes = topResults.slice(0, 3).map(gene => 
+      response += 'The top matches include: ';
+      const topGenes = topResults.slice(0, 3).map(gene =>
         `${gene.symbol} (${gene.species}) - ${gene.name}`
       );
       response += topGenes.join('; ') + '.';
     }
-    
+
     return response;
   }
 
@@ -373,7 +373,7 @@ export class ScientificNLPProcessor {
    */
   resolveReferences(query, history) {
     let resolved = query;
-    
+
     // Replace "it" with last mentioned gene
     if (/\bit\b/i.test(resolved) && history.length > 0) {
       const lastGenes = history[history.length - 1].understanding?.entities?.genes || [];
@@ -381,7 +381,7 @@ export class ScientificNLPProcessor {
         resolved = resolved.replace(/\bit\b/i, lastGenes[0]);
       }
     }
-    
+
     // Replace "these genes" with previously mentioned genes
     if (/\bthese genes?\b/i.test(resolved) && history.length > 0) {
       const lastGenes = history[history.length - 1].understanding?.entities?.genes || [];
@@ -389,7 +389,7 @@ export class ScientificNLPProcessor {
         resolved = resolved.replace(/\bthese genes?\b/i, lastGenes.join(' and '));
       }
     }
-    
+
     return resolved;
   }
 }
