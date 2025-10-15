@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --no-experimental-detect-module
 
 /**
  * Simple AGR MCP Server - Minimal Implementation
