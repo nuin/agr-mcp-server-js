@@ -5,32 +5,6 @@ All notable changes to the Enhanced AGR MCP Server (JavaScript Implementation) w
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.3] - 2025-01-24
-
-### Fixed
-- **Critical MCP Protocol Fix**: Removed console.log statements from server startup code
-  - Fixed `agr-server-simple.js` stdout pollution that was corrupting JSON-RPC handshake
-  - Fixed `agr-server-simple-natural.js` startup logging to prevent protocol errors
-  - All logging now properly goes to stderr, keeping stdout clean for MCP protocol
-  - Servers now successfully connect with Claude Code without protocol errors
-
-### Added
-- **MCP Protocol Compliance Test** (`test-mcp-protocol.js`)
-  - Automated test to verify clean JSON-RPC output
-  - Detects stdout pollution that breaks MCP protocol
-  - Ensures proper separation of logs (stderr) and protocol messages (stdout)
-  - Run with: `node test-mcp-protocol.js`
-
-### Changed
-- Silent server startup - no console output during initialization
-- All server status messages now go to stderr instead of stdout
-- Improved MCP protocol compliance for production deployments
-
-## [3.2.2] - 2025-01-24
-
-### Fixed
-- Attempted fix for stdout pollution (incomplete - see 3.2.3 for complete fix)
-
 ## [3.0.0] - 2025-01-24
 
 ### 🎉 Initial JavaScript Implementation

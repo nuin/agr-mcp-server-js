@@ -1,12 +1,12 @@
 {
   "name": "agr-mcp-server-enhanced",
-  "version": "3.0.0",
-  "description": "Enhanced Alliance of Genome Resources MCP Server - High-performance JavaScript implementation with simplified search capabilities",
+  "version": "3.2.6",
+  "description": "Enhanced Alliance of Genome Resources MCP Server - High-performance JavaScript implementation with Node v23 compatibility",
   "type": "module",
   "main": "src/agr-server-enhanced.js",
   "bin": {
-    "agr-mcp-server": "src/agr-server-simple.js",
-    "agr-mcp-natural": "src/agr-server-simple-natural.js",
+    "agr-mcp-server": "src/agr-server-simple-wrapper.cjs",
+    "agr-mcp-natural": "src/agr-server-simple-natural-wrapper.cjs",
     "alliance": "bin/alliance.js",
     "agr-chat": "bin/agr-chat.js",
     "agr": "bin/agr-chat.js"
@@ -30,7 +30,8 @@
     "cache:clear": "node scripts/clear-cache.js",
     "setup": "npm install && npm run validate",
     "query": "node scripts/easy-query.js",
-    "query:help": "node scripts/easy-query.js"
+    "query:help": "node scripts/easy-query.js",
+    "test:mcp": "node scripts/test-mcp-setup.js"
   },
   "keywords": [
     "genomics",
