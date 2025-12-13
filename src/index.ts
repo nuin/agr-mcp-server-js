@@ -284,22 +284,9 @@ server.tool(
   {},
   async () => {
     try {
-      const species = client.getSpeciesList();
+      const data = await client.getSpeciesList();
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                description:
-                  "Model organisms in the Alliance of Genome Resources",
-                species,
-              },
-              null,
-              2
-            ),
-          },
-        ],
+        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
       };
     } catch (error) {
       return {
@@ -334,22 +321,18 @@ server.resource("entity-types", "agr://entity-types", async () => ({
 }));
 
 // Resource: Species
-server.resource("species", "agr://species", async () => ({
-  contents: [
-    {
-      uri: "agr://species",
-      mimeType: "application/json",
-      text: JSON.stringify(
-        {
-          description: "Model organisms in Alliance of Genome Resources",
-          species: client.getSpeciesList(),
-        },
-        null,
-        2
-      ),
-    },
-  ],
-}));
+server.resource("species", "agr://species", async () => {
+  const data = await client.getSpeciesList();
+  return {
+    contents: [
+      {
+        uri: "agr://species",
+        mimeType: "application/json",
+        text: JSON.stringify(data, null, 2),
+      },
+    ],
+  };
+});
 
 function getEntityDescription(type: EntityType): string {
   const descriptions: Record<EntityType, string> = {

@@ -81,7 +81,7 @@ export class AllianceClient {
           symbol?: string;
           name: string;
           name_key?: string;
-          species?: { name: string };
+          species?: string;
           category: string;
           highlights?: Record<string, string[]>;
         }>;
@@ -95,9 +95,8 @@ export class AllianceClient {
           id: r.id,
           symbol: r.symbol,
           name: r.name || r.name_key || r.id,
-          species: r.species?.name,
+          species: r.species,
           category: r.category,
-          description: r.highlights?.description?.[0],
           highlights: r.highlights,
         })),
         total: response.total,
@@ -300,22 +299,28 @@ export class AllianceClient {
   }
 
   /**
-   * Get list of supported species
+   * Get list of supported species from API
    */
-  getSpeciesList(): Array<{ name: Species; shortName: string }> {
-    // Return hardcoded list of Alliance model organisms
-    const speciesList: Array<{ name: Species; shortName: string }> = [
-      { name: "Homo sapiens", shortName: "human" },
-      { name: "Mus musculus", shortName: "mouse" },
-      { name: "Rattus norvegicus", shortName: "rat" },
-      { name: "Danio rerio", shortName: "zebrafish" },
-      { name: "Drosophila melanogaster", shortName: "fly" },
-      { name: "Caenorhabditis elegans", shortName: "worm" },
-      { name: "Saccharomyces cerevisiae", shortName: "yeast" },
-      { name: "Xenopus laevis", shortName: "frog" },
-      { name: "Xenopus tropicalis", shortName: "xenopus" },
-    ];
-    return speciesList;
+  async getSpeciesList(): Promise<unknown> {
+    const url = `${this.agrApiUrl}/api/species`;
+    try {
+      return await this.fetch<unknown>(url);
+    } catch {
+      // Fallback to hardcoded list
+      return {
+        results: [
+          { name: "Homo sapiens", shortName: "Hsa", commonNames: ["human"] },
+          { name: "Mus musculus", shortName: "Mmu", commonNames: ["mouse"] },
+          { name: "Rattus norvegicus", shortName: "Rno", commonNames: ["rat"] },
+          { name: "Danio rerio", shortName: "Dre", commonNames: ["zebrafish"] },
+          { name: "Drosophila melanogaster", shortName: "Dme", commonNames: ["fly"] },
+          { name: "Caenorhabditis elegans", shortName: "Cel", commonNames: ["worm"] },
+          { name: "Saccharomyces cerevisiae", shortName: "Sce", commonNames: ["yeast"] },
+          { name: "Xenopus tropicalis", shortName: "Xtr", commonNames: ["xenopus"] },
+        ],
+        total: 8,
+      };
+    }
   }
 
   /**

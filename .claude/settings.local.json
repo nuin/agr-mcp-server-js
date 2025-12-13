@@ -16,7 +16,8 @@
       "Bash(pdflatex:*)",
       "Bash(xelatex:*)",
       "Bash(git checkout:*)",
-      "WebFetch(domain:www.alliancegenome.org)"
+      "WebFetch(domain:www.alliancegenome.org)",
+      "Bash(git merge:*)"
     ],
     "deny": []
   },
