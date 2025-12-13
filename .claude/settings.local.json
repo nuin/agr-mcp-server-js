@@ -14,7 +14,9 @@
       "Bash(export:*)",
       "Bash(alliance \"find PTEN gene\")",
       "Bash(pdflatex:*)",
-      "Bash(xelatex:*)"
+      "Bash(xelatex:*)",
+      "Bash(git checkout:*)",
+      "WebFetch(domain:www.alliancegenome.org)"
     ],
     "deny": []
   },

@@ -1,10 +1,8 @@
 {
   "mcpServers": {
     "agr-genomics": {
-      "type": "stdio",
-      "command": "agr-mcp-server",
-      "args": [],
-      "env": {}
+      "command": "node",
+      "args": ["dist/index.js"]
     }
   }
 }

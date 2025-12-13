@@ -221,6 +221,7 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             font-size: 0.9rem;
             line-height: 1.6;
+            white-space: pre-wrap;
             overflow-x: auto;
             margin: 2rem 0;
             position: relative;
@@ -649,6 +650,8 @@ agr-chat           <span class="comment"># Interactive chat</span>
                     <span class="card-icon">🔗</span>
                     <h3>Claude Desktop Configuration</h3>
                     <p>Connect the MCP server to Claude Desktop for seamless integration</p>
+
+                    <h4 style="margin-top: 1.5rem; color: #2980b9;">Option 1: npm Package (Recommended)</h4>
                     <div class="code-block" data-language="json">
 {
   <span class="string">"mcpServers"</span>: {
@@ -661,6 +664,25 @@ agr-chat           <span class="comment"># Interactive chat</span>
   }
 }
                     </div>
+
+                    <h4 style="margin-top: 1.5rem; color: #2980b9;">Option 2: Local Development Setup</h4>
+                    <div class="code-block" data-language="json">
+{
+  <span class="string">"mcpServers"</span>: {
+    <span class="string">"agr-genomics"</span>: {
+      <span class="string">"command"</span>: <span class="string">"/usr/local/bin/node"</span>,
+      <span class="string">"args"</span>: [<span class="string">"/Users/nuin/Projects/alliance/agr-mcp-server-js/src/agr-server-enhanced.js"</span>],
+      <span class="string">"env"</span>: {
+        <span class="string">"LOG_LEVEL"</span>: <span class="string">"info"</span>
+      }
+    }
+  }
+}
+                    </div>
+                    <p style="margin-top: 1rem; font-size: 0.9rem; color: #7f8c8d;">
+                        <strong>Note:</strong> Use Option 1 after installing the npm package globally.
+                        Use Option 2 for local development or if you cloned the repository.
+                    </p>
                 </div>
 
                 <div class="cards fade-in">
