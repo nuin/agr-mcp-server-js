@@ -17,15 +17,22 @@ TypeScript MCP server for Alliance of Genome Resources (AGR) genomics data. Foll
 
 ```
 src/
-├── types.ts    # Entity types, interfaces, constants
-├── client.ts   # AllianceClient - AGR API wrapper
-└── index.ts    # MCP server with tool definitions
+├── types.ts    # Entity types, interfaces, constants, species mappings
+├── client.ts   # AllianceClient - AGR API wrapper with all fetch logic
+└── index.ts    # MCP server: tool definitions, resources, server startup
 ```
+
+### Data Flow
+
+1. `index.ts` defines MCP tools with Zod schemas for input validation
+2. Each tool calls methods on `AllianceClient` singleton
+3. `client.ts` makes HTTP requests to AGR APIs, returns typed responses
+4. Results serialized as JSON text content back to MCP client
 
 ### API Endpoints
 
 - **AGR REST API**: `https://www.alliancegenome.org/api` - Gene info, diseases, expression, orthologs
-- **AllianceMine**: `https://www.alliancegenome.org/alliancemine/service` - Advanced search
+- **AllianceMine**: `https://www.alliancegenome.org/alliancemine/service` - Advanced search (available via `searchMine()` but not exposed as tool)
 
 ### MCP Tools (11)
 
@@ -43,25 +50,33 @@ src/
 | `search_alleles` | Search alleles |
 | `get_species_list` | List supported model organisms |
 
+### MCP Resources
+
+- `agr://entity-types` - List of searchable entity types
+- `agr://species` - Live species list from API
+
 ### Supported Species
 
-Human, mouse, rat, zebrafish, fly, worm, yeast, frog (Xenopus)
+Human, mouse, rat, zebrafish, fly, worm, yeast, frog (Xenopus laevis & tropicalis)
 
 ### Gene ID Formats
 
-- `HGNC:1100` (human)
-- `MGI:95892` (mouse)
-- `RGD:3889` (rat)
-- `ZFIN:ZDB-GENE-*` (zebrafish)
-- `FB:FBgn*` (fly)
-- `WB:WBGene*` (worm)
-- `SGD:S*` (yeast)
-- `Xenbase:XB-GENE-*` (xenopus)
+| Species | Prefix | Example |
+|---------|--------|---------|
+| Human | `HGNC:` | `HGNC:1100` |
+| Mouse | `MGI:` | `MGI:95892` |
+| Rat | `RGD:` | `RGD:3889` |
+| Zebrafish | `ZFIN:ZDB-GENE-` | `ZFIN:ZDB-GENE-990415-72` |
+| Fly | `FB:FBgn` | `FB:FBgn0000017` |
+| Worm | `WB:WBGene` | `WB:WBGene00000898` |
+| Yeast | `SGD:S` | `SGD:S000002536` |
+| Xenopus | `Xenbase:XB-GENE-` | `Xenbase:XB-GENE-485905` |
 
 ## Development
 
 - ESM modules (`"type": "module"`)
-- TypeScript strict mode
+- TypeScript strict mode, target ES2022
 - Native fetch (no axios)
 - Zod for input validation
-- No caching layer (stateless)
+- Stateless - no caching layer
+- Requires Node.js >= 18.0.0

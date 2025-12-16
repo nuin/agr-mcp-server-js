@@ -4,24 +4,9 @@ MCP server for querying [Alliance of Genome Resources](https://www.alliancegenom
 
 ## Installation
 
-### Claude Desktop
+### Option 1: npx (Recommended)
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
-
-```json
-{
-  "mcpServers": {
-    "agr-genomics": {
-      "command": "npx",
-      "args": ["-y", "agr-mcp-server"]
-    }
-  }
-}
-```
-
-### Claude Code (CLI)
-
-Add to `~/.claude/settings.json`:
+No installation required. Add to your MCP client config:
 
 ```json
 {
@@ -34,54 +19,33 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-### Cursor
-
-Add to Cursor settings (Settings > MCP Servers):
-
-```json
-{
-  "agr-genomics": {
-    "command": "npx",
-    "args": ["-y", "agr-mcp-server"]
-  }
-}
-```
-
-### Windsurf
-
-Add to `~/.codeium/windsurf/mcp_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "agr-genomics": {
-      "command": "npx",
-      "args": ["-y", "agr-mcp-server"]
-    }
-  }
-}
-```
-
-### From source
+### Option 2: Global install
 
 ```bash
-git clone https://github.com/nuin/agr-mcp-server-js.git
-cd agr-mcp-server-js
-npm install && npm run build
+npm install -g agr-mcp-server
 ```
 
-Then use the local path in your config:
+Then use in your config:
 
 ```json
 {
   "mcpServers": {
     "agr-genomics": {
-      "command": "node",
-      "args": ["/path/to/agr-mcp-server-js/dist/index.js"]
+      "command": "agr-mcp-server"
     }
   }
 }
 ```
+
+### Config file locations
+
+| Client | Config path |
+|--------|-------------|
+| Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Claude Code | `~/.claude/settings.json` |
+| Cursor | Settings > MCP Servers |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` |
 
 ## Usage
 
@@ -129,8 +93,8 @@ Human, mouse, rat, zebrafish, fly, worm, yeast, xenopus
 
 ## Data Sources
 
-- **Search & gene data**: [Alliance of Genome Resources API](https://www.alliancegenome.org/api)
-- **Advanced search**: [AllianceMine](https://www.alliancegenome.org/alliancemine)
+- [Alliance of Genome Resources API](https://www.alliancegenome.org/api)
+- [AllianceMine](https://www.alliancegenome.org/alliancemine)
 
 ## License
 
