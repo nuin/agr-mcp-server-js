@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGR MCP Server - Enhanced JavaScript Implementation</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/white.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+
+    <style>
+        .reveal .slides section {
+            text-align: left;
+            font-size: 1.1em;
+        }
+
+        .reveal .slides section.center {
+            text-align: center;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: #2c3e50;
+            text-transform: none;
+            line-height: 1.2;
+        }
+
+        .reveal h1 {
+            font-size: 2.5em;
+        }
+
+        .reveal h2 {
+            font-size: 1.8em;
+            margin-bottom: 30px;
+        }
+
+        .title-slide {
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: white !important;
+        }
+
+        .title-slide h1, .title-slide h2, .title-slide p {
+            color: white !important;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2ecc71;
+        }
+
+        .feature-item h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        .demo-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 20px 0;
+            white-space: pre-wrap;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+
+        .architecture-box {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .tool-item {
+            background: #f1f8e9;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .installation-steps {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section class="title-slide center">
+                <h1>🧬 AGR MCP Server</h1>
+                <h2>Enhanced JavaScript Implementation</h2>
+                <p>Alliance of Genome Resources<br>Model Context Protocol Server</p>
+                <p><em>Genomics data access for AI assistants and research tools</em></p>
+            </section>
+
+            <!-- What is it? -->
+            <section>
+                <h2>What is the AGR MCP Server?</h2>
+
+                <div class="highlight">
+                    <strong>A bridge between AI assistants (like Claude) and genomics databases</strong>
+                </div>
+
+                <ul style="font-size: 1.1em; line-height: 1.8;">
+                    <li><strong>Purpose:</strong> Programmatic access to Alliance of Genome Resources data</li>
+                    <li><strong>Protocol:</strong> Model Context Protocol (MCP) by Anthropic</li>
+                    <li><strong>Language:</strong> JavaScript/Node.js implementation</li>
+                    <li><strong>Target:</strong> Researchers, bioinformaticians, AI tools</li>
+                </ul>
+
+                <div class="architecture-box">
+                    <strong>Claude ↔ MCP Server ↔ AGR APIs ↔ Genomics Databases</strong>
+                </div>
+            </section>
+
+            <!-- Available Tools -->
+            <section>
+                <h2>Available Genomics Tools</h2>
+
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">MCP Tools</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">6</div>
+                        <div class="stat-label">Model Organisms</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">Server Variants</div>
+                    </div>
+                </div>
+
+                <div class="tool-grid">
+                    <div class="tool-item"><strong>search_genes</strong><br>Gene search across species</div>
+                    <div class="tool-item"><strong>get_gene_info</strong><br>Detailed gene information</div>
+                    <div class="tool-item"><strong>get_gene_diseases</strong><br>Disease associations</div>
+                    <div class="tool-item"><strong>search_diseases</strong><br>Disease search</div>
+                    <div class="tool-item"><strong>get_gene_expression</strong><br>Expression data</div>
+                    <div class="tool-item"><strong>find_orthologs</strong><br>Cross-species homologs</div>
+                    <div class="tool-item"><strong>blast_sequence</strong><br>BLAST search</div>
+                    <div class="tool-item"><strong>complex_search</strong><br>Natural language queries</div>
+                    <div class="tool-item"><strong>faceted_search</strong><br>Multi-filter search</div>
+                    <div class="tool-item"><strong>get_species_list</strong><br>Supported organisms</div>
+                    <div class="tool-item"><strong>get_cache_stats</strong><br>Performance monitoring</div>
+                    <div class="tool-item"><strong>clear_cache</strong><br>Cache management</div>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section>
+                <h2>System Architecture</h2>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <h4>🏗️ Core Server</h4>
+                        <ul>
+                            <li>Node.js with async I/O</li>
+                            <li>Axios HTTP client</li>
+                            <li>MCP protocol compliance</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <h4>💾 Caching Layer</h4>
+                        <ul>
+                            <li>NodeCache with TTL</li>
+                            <li>5-10 minute cache times</li>
+                            <li>Automatic cleanup</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <h4>🛡️ Error Handling</h4>
+                        <ul>
+                            <li>Exponential backoff retry</li>
+                            <li>Rate limiting (100 req/min)</li>
+                            <li>Input validation</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <h4>📊 Monitoring</h4>
+                        <ul>
+                            <li>Cache hit/miss tracking</li>
+                            <li>Response time monitoring</li>
+                            <li>Structured logging (Pino)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="architecture-box">
+                    <strong>Three Server Variants:</strong><br>
+                    Enhanced (full features) • Simple (basic tools) • Natural Language (conversational)
+                </div>
+            </section>
+
+            <!-- Advanced Features -->
+            <section>
+                <h2>Advanced Query Features</h2>
+
+                <h3>🧠 Natural Language Processing</h3>
+                <div class="code-block">
+                    <strong>Boolean Operators:</strong> AND, OR, NOT<br>
+                    <strong>Species Filters:</strong> "in human", "in mouse", "in zebrafish"<br>
+                    <strong>Process Detection:</strong> Automatic biological process recognition
+                </div>
+
+                <h3>📝 Query Examples</h3>
+                <div class="code-block">
+<pre>• "breast cancer genes in human AND DNA repair NOT p53"
+• "insulin OR glucose in mouse"
+• "BRCA1 in human"
+• "apoptosis genes NOT p53 in zebrafish"</pre>
+                </div>
+
+                <h3>🔍 Cross-Entity Search</h3>
+                <div class="code-block">
+                    Search genes, diseases, phenotypes, and alleles simultaneously with intelligent relationship discovery
+                </div>
+            </section>
+
+            <!-- Installation -->
+            <section>
+                <h2>Installation & Setup</h2>
+
+                <div class="installation-steps">
+                    <h3>Option 1: npm Package (Recommended)</h3>
+                    <div class="code-block">
+<pre># Install globally
+npm install -g agr-mcp-server-enhanced
+
+# Available commands
+agr-mcp-server     # Main MCP server
+agr-mcp-natural    # Natural language server
+alliance           # CLI interface
+agr-chat           # Interactive chat</pre>
+                    </div>
+
+                    <h3>Option 2: From Source</h3>
+                    <div class="code-block">
+<pre># Clone and setup
+git clone https://github.com/nuin/agr-mcp-server-js.git
+cd agr-mcp-server-js
+npm run setup</pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Claude Integration -->
+            <section>
+                <h2>Claude Desktop Integration</h2>
+
+                <div class="code-block">
+                    <strong>Configuration file location:</strong><br>
+                    • macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code><br>
+                    • Windows: <code>%APPDATA%/Claude/claude_desktop_config.json</code>
+                </div>
+
+                <div class="code-block">
+<pre>{
+  "mcpServers": {
+    "agr-genomics": {
+      "command": "agr-mcp-server",
+      "env": {
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}</pre>
+                </div>
+
+                <div class="highlight">
+                    <strong>After setup:</strong> Restart Claude Desktop completely, then you can ask genomics questions in natural language
+                </div>
+            </section>
+
+            <!-- Live Demo -->
+            <section>
+                <h2>Live Demo Results</h2>
+
+                <h3>🧬 PTEN Gene Search</h3>
+                <div class="demo-output">Query: "find PTEN gene"
+
+🧬 Found 61 genes:
+
+1. PTEN (Homo sapiens) - HGNC:9588
+   phosphatase and tensin homolog
+
+2. Pten (Mus musculus) - MGI:109583
+   phosphatase and tensin homolog
+
+3. Pten (Drosophila melanogaster) - FB:FBgn0026379
+   Phosphatase and tensin homolog
+
+... and 58 more results</div>
+
+                <h3>🔬 Complex Boolean Query</h3>
+                <div class="demo-output">Query: "PTEN tumor suppressor genes in human"
+
+Results: 1,739 human genes with aggregations:
+• Species filtering: ✅ Working
+• Boolean parsing: ✅ Functional
+• Disease categories: 539 cancer genes
+• Process filtering: 1,139 response genes</div>
+            </section>
+
+            <!-- CLI Interface -->
+            <section>
+                <h2>Command Line Interface</h2>
+
+                <h3>🚀 Performance Flags</h3>
+                <div class="code-block">
+<pre>alliance "find PTEN gene" --fast           # Quick results
+alliance "find PTEN gene" --detailed       # Full information
+alliance "find PTEN gene" --limit=5        # Limit results
+alliance "find PTEN gene" --simple         # Use basic server</pre>
+                </div>
+
+                <h3>⚡ Speed Improvements</h3>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <h4>Before Optimization</h4>
+                        <ul>
+                            <li>Timeout after 2+ minutes</li>
+                            <li>Fetched all 61 results</li>
+                            <li>Slow JSON-RPC communication</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <h4>After Optimization</h4>
+                        <ul>
+                            <li>10-second timeout limit</li>
+                            <li>Configurable result limits</li>
+                            <li>Improved server selection</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Practical Usage -->
+            <section>
+                <h2>Practical Research Applications</h2>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <h4>🔬 Gene Research</h4>
+                        <ul>
+                            <li>Cross-species gene searches</li>
+                            <li>Disease association lookup</li>
+                            <li>Ortholog identification</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <h4>🧬 Sequence Analysis</h4>
+                        <ul>
+                            <li>BLAST searches</li>
+                            <li>Expression data queries</li>
+                            <li>Phenotype associations</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <h4>💬 Natural Language</h4>
+                        <ul>
+                            <li>Ask questions in plain English</li>
+                            <li>Boolean logic support</li>
+                            <li>Species-specific filtering</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <h4>🔧 Integration</h4>
+                        <ul>
+                            <li>Claude Desktop ready</li>
+                            <li>CLI tools available</li>
+                            <li>Programmatic access</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Current Status -->
+            <section>
+                <h2>Current Status & Next Steps</h2>
+
+                <h3>✅ What's Working</h3>
+                <ul style="font-size: 1.1em; line-height: 1.8;">
+                    <li>All 12 MCP tools functional</li>
+                    <li>Claude Desktop integration active</li>
+                    <li>Natural language queries working</li>
+                    <li>CLI interface with performance flags</li>
+                    <li>Comprehensive caching and monitoring</li>
+                </ul>
+
+                <h3>🚧 Areas for Improvement</h3>
+                <ul style="font-size: 1.1em; line-height: 1.8;">
+                    <li>CLI timeout optimization (completed)</li>
+                    <li>Better error messages for failed queries</li>
+                    <li>Documentation for complex query syntax</li>
+                    <li>Integration with JBrowse genome browser</li>
+                </ul>
+
+                <div class="highlight">
+                    <strong>Ready for:</strong> Research use, testing, feedback from genomics community
+                </div>
+            </section>
+
+            <!-- Questions -->
+            <section class="center" style="background: linear-gradient(135deg, #3498db, #2ecc71); color: white;">
+                <h1 style="color: white;">Questions & Discussion</h1>
+
+                <div style="margin-top: 50px; font-size: 1.2em;">
+                    <p><strong>Repository:</strong> agr-mcp-server-js</p>
+                    <p><strong>npm Package:</strong> agr-mcp-server-enhanced</p>
+                    <p><strong>Installation:</strong> npm install -g agr-mcp-server-enhanced</p>
+                </div>
+
+                <div style="margin-top: 40px;">
+                    <p><em>Ready for testing and feedback from the genomics research community</em></p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            transitionSpeed: 'default',
+            backgroundTransition: 'fade',
+            plugins: [ RevealHighlight ],
+            controls: true,
+            progress: true,
+            center: false,
+            touch: true,
+            loop: false,
+            rtl: false,
+            navigationMode: 'default',
+            shuffle: false,
+            fragments: true,
+            embedded: false,
+            help: true,
+            showNotes: false,
+            autoPlayMedia: null,
+            autoSlide: 0,
+            autoSlideStoppable: true,
+            mouseWheel: false,
+            hideInactiveCursor: true,
+            hideCursorTime: 5000,
+            previewLinks: false,
+            focusBodyOnPageVisibilityChange: true,
+            viewDistance: 3,
+            mobileViewDistance: 2
+        });
+    </script>
+</body>
+</html>

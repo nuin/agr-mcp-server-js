@@ -1,0 +1,24 @@
+\frametitle{Cross-Entity Search}
+\textbf{Multi-Dimensional Queries} \faIcon{project-diagram}
+
+    \begin{lstlisting}
+// Search genes, diseases, and phenotypes simultaneously
+{
+  "tool": "complex_search",
+  "arguments": {
+    "query": "insulin resistance genes and diabetes diseases in human",
+    "limit": 10
+  }
+}
+
+// Advanced faceted search with multiple filters
+{
+  "tool": "faceted_search",
+  "arguments": {
+    "genes": ["BRCA1", "BRCA2", "TP53"],
+    "diseases": ["breast cancer", "ovarian cancer"],
+    "processes": ["DNA repair", "apoptosis"],
+    "species": "Homo sapiens"
+  }
+}
+    \end{lstlisting}

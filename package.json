@@ -1,54 +1,33 @@
 {
-  "name": "agr-mcp-server-enhanced",
-  "version": "3.0.0",
-  "description": "Enhanced Alliance of Genome Resources MCP Server - High-performance JavaScript implementation with simplified search capabilities",
-  "type": "module",
-  "main": "src/agr-server-enhanced.js",
+  "name": "agr-mcp-server",
+  "version": "4.0.2",
+  "description": "MCP server for Alliance of Genome Resources - access genomics data across model organisms",
+  "main": "dist/index.js",
   "bin": {
-    "agr-mcp-server": "src/agr-server-simple.js",
-    "agr-mcp-natural": "src/agr-server-simple-natural.js",
-    "alliance": "bin/alliance.js",
-    "agr-chat": "bin/agr-chat.js",
-    "agr": "bin/agr-chat.js"
+    "agr-mcp-server": "./dist/index.js"
   },
+  "type": "module",
   "scripts": {
-    "start": "node src/agr-server-enhanced.js",
-    "dev": "node --inspect src/agr-server-enhanced.js",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "lint": "eslint src/**/*.js",
-    "lint:fix": "eslint src/**/*.js --fix",
-    "format": "prettier --write src/**/*.js",
-    "build": "npm run lint && npm run test",
-    "docker:build": "docker build -t agr-mcp-server-js .",
-    "docker:run": "docker run -p 3000:3000 agr-mcp-server-js",
-    "benchmark": "node benchmark/performance-test.js",
-    "docs": "jsdoc src/**/*.js -d docs",
-    "validate": "npm audit && npm run lint && npm run test",
-    "precommit": "npm run lint:fix && npm run format && npm run test",
-    "health-check": "node scripts/health-check.js",
-    "cache:clear": "node scripts/clear-cache.js",
-    "setup": "npm install && npm run validate",
-    "query": "node scripts/easy-query.js",
-    "query:help": "node scripts/easy-query.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
+    "mcp",
+    "alliance-genome-resources",
     "genomics",
     "bioinformatics",
-    "alliance-genome-resources",
-    "mcp-server",
-    "gene-search",
-    "orthology",
-    "disease-associations",
-    "blast",
-    "high-performance",
-    "caching",
-    "simplified-search",
-    "claude-code"
+    "model-organisms",
+    "genes",
+    "diseases",
+    "orthologs",
+    "model-context-protocol",
+    "llm",
+    "claude"
   ],
   "author": {
-    "name": "Genomics Development Team",
-    "email": "genomics@example.com"
+    "name": "Paulo Nuin"
   },
   "license": "MIT",
   "repository": {
@@ -59,54 +38,20 @@
     "url": "https://github.com/nuin/agr-mcp-server-js/issues"
   },
   "homepage": "https://github.com/nuin/agr-mcp-server-js#readme",
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.5.0",
-    "axios": "^1.6.0",
-    "node-cache": "^5.1.2",
-    "pino": "^8.15.0",
-    "pino-pretty": "^10.2.0"
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^1.0.0",
-    "eslint": "^8.0.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.25.0",
-    "eslint-plugin-n": "^16.0.0",
-    "eslint-plugin-promise": "^6.0.0",
-    "jsdoc": "^4.0.0",
-    "prettier": "^3.0.0",
-    "vitest": "^1.0.0"
+    "@types/node": "^20.10.0",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.0"
   },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "optionalDependencies": {
-    "bufferutil": "^4.0.5",
-    "utf-8-validate": "^6.0.3"
+  "engines": {
+    "node": ">=18.0.0"
   },
   "files": [
-    "src/",
-    "docs/",
-    "scripts/",
-    "config/",
-    "README.md",
-    "CHANGELOG.md",
-    "LICENSE"
-  ],
-  "config": {
-    "logLevel": "info",
-    "cacheSize": "1000",
-    "timeout": "30000"
-  },
-  "funding": {
-    "type": "github",
-    "url": "https://github.com/sponsors/nuin"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+    "dist",
+    "README.md"
+  ]
 }
