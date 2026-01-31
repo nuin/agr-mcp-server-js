@@ -246,6 +246,81 @@ export interface AllianceMineResponse {
   facets?: Record<string, unknown>;
 }
 
+// PathQuery builder types
+export type QueryOperator =
+  | "="
+  | "!="
+  | "CONTAINS"
+  | "LIKE"
+  | "<"
+  | ">"
+  | "<="
+  | ">="
+  | "ONE OF"
+  | "NONE OF"
+  | "IS NULL"
+  | "IS NOT NULL";
+
+export interface QueryConstraint {
+  op: QueryOperator;
+  value: string | string[];
+}
+
+export interface QuerySort {
+  field: string;
+  direction: "ASC" | "DESC";
+}
+
+export interface QueryBuilder {
+  from: string;
+  select: string[];
+  where?: Record<string, string | QueryConstraint>;
+  joins?: string[];
+  sort?: QuerySort;
+  limit?: number;
+}
+
+export interface PathQueryResult {
+  results: Record<string, unknown>[];
+  columnHeaders?: string[];
+  rootClass?: string;
+}
+
+// Template types
+export interface MineTemplate {
+  name: string;
+  title: string;
+  description?: string;
+  rank?: number;
+  constraintLogic?: string;
+  constraints?: Record<string, unknown>[];
+}
+
+export interface TemplateParameter {
+  name: string;
+  path: string;
+  op: string;
+  value?: string;
+  code?: string;
+}
+
+// List types
+export interface MineList {
+  name: string;
+  type: string;
+  size: number;
+  description?: string;
+  dateCreated?: string;
+  authorized?: boolean;
+}
+
+export interface ListContents {
+  name: string;
+  type: string;
+  size: number;
+  results: Record<string, unknown>[];
+}
+
 // API Error type
 export interface APIError {
   status: number;

@@ -12,10 +12,16 @@ import {
   Species,
   SPECIES_MAP,
   SPECIES,
+  QueryBuilder,
+  QueryConstraint,
+  PathQueryResult,
+  MineTemplate,
+  MineList,
+  ListContents,
 } from "./types.js";
 
 const AGR_API_URL = "https://www.alliancegenome.org/api";
-const ALLIANCEMINE_URL = "https://www.alliancegenome.org/alliancemine/service";
+const ALLIANCEMINE_URL = "https://alliancemine.alliancegenome.org/alliancemine/service";
 
 export class AllianceClient {
   private agrApiUrl: string;
@@ -335,5 +341,360 @@ export class AllianceClient {
       return input as Species;
     }
     return null;
+  }
+
+  // ============================================
+  // AllianceMine API Methods
+  // ============================================
+
+  private getAuthToken(): string | null {
+    return process.env.ALLIANCEMINE_TOKEN || null;
+  }
+
+  private async fetchWithAuth<T>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error(
+        "Authentication required. Set ALLIANCEMINE_TOKEN environment variable."
+      );
+    }
+
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Token ${token}`,
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      headers: { ...headers, ...(options.headers as Record<string, string>) },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  /**
+   * Run a raw PathQuery XML query against AllianceMine
+   */
+  async runPathQuery(xml: string): Promise<PathQueryResult> {
+    const params = new URLSearchParams({
+      query: xml,
+      format: "json",
+    });
+
+    const url = `${this.allianceMineUrl}/query/results?${params.toString()}`;
+
+    try {
+      const response = await this.fetch<{
+        results: unknown[][];
+        columnHeaders?: string[];
+        rootClass?: string;
+      }>(url);
+
+      // Convert array results to objects using column headers
+      const headers = response.columnHeaders || [];
+      const results = response.results.map((row) => {
+        const obj: Record<string, unknown> = {};
+        row.forEach((val, idx) => {
+          const key = headers[idx] || `col${idx}`;
+          obj[key] = val;
+        });
+        return obj;
+      });
+
+      return {
+        results,
+        columnHeaders: headers,
+        rootClass: response.rootClass,
+      };
+    } catch (error) {
+      throw new Error(`PathQuery failed: ${error}`);
+    }
+  }
+
+  /**
+   * Build PathQuery XML from QueryBuilder definition
+   */
+  buildPathQueryXml(query: QueryBuilder): string {
+    const { from, select, where, joins, sort, limit } = query;
+
+    let xml = `<query model="genomic" view="${select.join(" ")}"`;
+    if (sort) {
+      xml += ` sortOrder="${sort.field} ${sort.direction}"`;
+    }
+    xml += ">";
+
+    // Add outer joins
+    if (joins && joins.length > 0) {
+      for (const join of joins) {
+        xml += `<join path="${from}.${join}" style="OUTER"/>`;
+      }
+    }
+
+    // Add constraints
+    if (where) {
+      let code = "A";
+      for (const [field, constraint] of Object.entries(where)) {
+        const path = field.includes(".") ? `${from}.${field}` : `${from}.${field}`;
+
+        if (typeof constraint === "string") {
+          xml += `<constraint path="${path}" op="=" value="${this.escapeXml(constraint)}" code="${code}"/>`;
+        } else {
+          const c = constraint as QueryConstraint;
+          if (Array.isArray(c.value)) {
+            xml += `<constraint path="${path}" op="${c.op}" code="${code}">${c.value.map((v) => `<value>${this.escapeXml(v)}</value>`).join("")}</constraint>`;
+          } else if (c.op === "IS NULL" || c.op === "IS NOT NULL") {
+            xml += `<constraint path="${path}" op="${c.op}" code="${code}"/>`;
+          } else {
+            xml += `<constraint path="${path}" op="${c.op}" value="${this.escapeXml(String(c.value))}" code="${code}"/>`;
+          }
+        }
+        code = String.fromCharCode(code.charCodeAt(0) + 1);
+      }
+    }
+
+    xml += "</query>";
+    return xml;
+  }
+
+  private escapeXml(str: string): string {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
+  /**
+   * Build and run a query using the QueryBuilder DSL
+   */
+  async buildAndRunQuery(
+    query: QueryBuilder
+  ): Promise<PathQueryResult> {
+    const xml = this.buildPathQueryXml(query);
+
+    // Add limit via size parameter
+    const params = new URLSearchParams({
+      query: xml,
+      format: "json",
+      size: String(query.limit || 100),
+    });
+
+    const url = `${this.allianceMineUrl}/query/results?${params.toString()}`;
+
+    try {
+      const response = await this.fetch<{
+        results: unknown[][];
+        columnHeaders?: string[];
+        rootClass?: string;
+      }>(url);
+
+      const headers = response.columnHeaders || [];
+      const results = response.results.map((row) => {
+        const obj: Record<string, unknown> = {};
+        row.forEach((val, idx) => {
+          const key = headers[idx] || `col${idx}`;
+          obj[key] = val;
+        });
+        return obj;
+      });
+
+      return {
+        results,
+        columnHeaders: headers,
+        rootClass: response.rootClass,
+      };
+    } catch (error) {
+      throw new Error(`Query failed: ${error}`);
+    }
+  }
+
+  /**
+   * List available query templates
+   */
+  async listTemplates(): Promise<MineTemplate[]> {
+    const url = `${this.allianceMineUrl}/templates`;
+
+    try {
+      const response = await this.fetch<{
+        templates: Record<string, MineTemplate>;
+      }>(url);
+
+      return Object.entries(response.templates).map(([name, template]) => ({
+        ...template,
+        name,
+      }));
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Run a template query with parameters
+   */
+  async runTemplate(
+    name: string,
+    params: Record<string, string>,
+    limit: number = 100
+  ): Promise<PathQueryResult> {
+    const queryParams = new URLSearchParams({
+      format: "json",
+      size: String(limit),
+    });
+
+    // Add template parameters (constraint values)
+    for (const [key, value] of Object.entries(params)) {
+      queryParams.set(`constraint${key}`, value);
+    }
+
+    const url = `${this.allianceMineUrl}/template/results/${encodeURIComponent(name)}?${queryParams.toString()}`;
+
+    try {
+      const response = await this.fetch<{
+        results: unknown[][];
+        columnHeaders?: string[];
+      }>(url);
+
+      const headers = response.columnHeaders || [];
+      const results = response.results.map((row) => {
+        const obj: Record<string, unknown> = {};
+        row.forEach((val, idx) => {
+          const key = headers[idx] || `col${idx}`;
+          obj[key] = val;
+        });
+        return obj;
+      });
+
+      return {
+        results,
+        columnHeaders: headers,
+      };
+    } catch (error) {
+      throw new Error(`Template query failed: ${error}`);
+    }
+  }
+
+  /**
+   * Get all available lists
+   */
+  async getLists(type?: string): Promise<MineList[]> {
+    const params = new URLSearchParams();
+    if (type) {
+      params.set("type", type);
+    }
+
+    const url = `${this.allianceMineUrl}/lists?${params.toString()}`;
+
+    try {
+      const response = await this.fetch<{
+        lists: MineList[];
+      }>(url);
+
+      return response.lists || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Get contents of a specific list
+   */
+  async getList(name: string): Promise<ListContents | null> {
+    const url = `${this.allianceMineUrl}/list/results/${encodeURIComponent(name)}?format=json`;
+
+    try {
+      const response = await this.fetch<{
+        results: unknown[][];
+        columnHeaders?: string[];
+        listInfo?: { name: string; type: string; size: number };
+      }>(url);
+
+      const headers = response.columnHeaders || [];
+      const results = response.results.map((row) => {
+        const obj: Record<string, unknown> = {};
+        row.forEach((val, idx) => {
+          const key = headers[idx] || `col${idx}`;
+          obj[key] = val;
+        });
+        return obj;
+      });
+
+      return {
+        name: response.listInfo?.name || name,
+        type: response.listInfo?.type || "unknown",
+        size: response.listInfo?.size || results.length,
+        results,
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Create a new list (requires authentication)
+   */
+  async createList(
+    name: string,
+    type: string,
+    identifiers: string[],
+    description?: string
+  ): Promise<MineList> {
+    const params = new URLSearchParams({
+      name,
+      type,
+    });
+    if (description) {
+      params.set("description", description);
+    }
+
+    const url = `${this.allianceMineUrl}/lists?${params.toString()}`;
+
+    const response = await this.fetchWithAuth<MineList>(url, {
+      method: "POST",
+      body: identifiers.join("\n"),
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+
+    return response;
+  }
+
+  /**
+   * Add items to an existing list (requires authentication)
+   */
+  async addToList(name: string, identifiers: string[]): Promise<MineList> {
+    const url = `${this.allianceMineUrl}/lists/append/${encodeURIComponent(name)}`;
+
+    const response = await this.fetchWithAuth<MineList>(url, {
+      method: "POST",
+      body: identifiers.join("\n"),
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+
+    return response;
+  }
+
+  /**
+   * Delete a list (requires authentication)
+   */
+  async deleteList(name: string): Promise<{ success: boolean }> {
+    const url = `${this.allianceMineUrl}/lists/${encodeURIComponent(name)}`;
+
+    await this.fetchWithAuth<unknown>(url, {
+      method: "DELETE",
+    });
+
+    return { success: true };
   }
 }

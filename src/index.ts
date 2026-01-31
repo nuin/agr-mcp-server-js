@@ -4,7 +4,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { AllianceClient } from "./client.js";
-import { ENTITY_TYPES, EntityType, SPECIES } from "./types.js";
+import { ENTITY_TYPES, EntityType, SPECIES, QueryBuilder } from "./types.js";
 
 const client = new AllianceClient();
 
@@ -293,6 +293,344 @@ server.tool(
         content: [
           { type: "text", text: `Error fetching species list: ${error}` },
         ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ============================================
+// AllianceMine Tools
+// ============================================
+
+// Tool: Mine Search
+server.tool(
+  "mine_search",
+  "Search AllianceMine for genes, proteins, diseases, and other biological entities using keyword search.",
+  {
+    query: z.string().describe("Search query - keyword, gene symbol, protein name, etc."),
+    type: z
+      .string()
+      .optional()
+      .describe("Filter by type: Gene, Protein, Disease, Pathway, etc."),
+    limit: z.number().optional().default(20).describe("Maximum results"),
+  },
+  async ({ query, type, limit }) => {
+    try {
+      const results = await client.searchMine(query, type, limit);
+      return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Error searching AllianceMine: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Mine Query (raw PathQuery XML)
+server.tool(
+  "mine_query",
+  "Run a raw PathQuery XML query against AllianceMine. For power users who know InterMine PathQuery syntax.",
+  {
+    xml: z.string().describe("PathQuery XML string"),
+  },
+  async ({ xml }) => {
+    try {
+      const results = await client.runPathQuery(xml);
+      return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `PathQuery error: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Mine Query Builder
+server.tool(
+  "mine_query_builder",
+  `Build and run structured queries against AllianceMine using a JSON DSL.
+
+Example query - find human genes in DNA repair pathway:
+{
+  "from": "Gene",
+  "select": ["symbol", "name", "organism.name", "pathways.name"],
+  "where": {
+    "organism.name": "Homo sapiens",
+    "pathways.name": { "op": "CONTAINS", "value": "DNA repair" }
+  },
+  "limit": 50
+}
+
+Supported operators: =, !=, CONTAINS, LIKE, <, >, <=, >=, ONE OF, NONE OF, IS NULL, IS NOT NULL`,
+  {
+    from: z.string().describe("Root class: Gene, Protein, Disease, Pathway, Phenotype, etc."),
+    select: z.array(z.string()).describe("Fields to return, e.g., ['symbol', 'organism.name']"),
+    where: z
+      .record(
+        z.union([
+          z.string(),
+          z.object({
+            op: z.string(),
+            value: z.union([z.string(), z.array(z.string())]),
+          }),
+        ])
+      )
+      .optional()
+      .describe("Constraints as field: value or field: {op, value}"),
+    joins: z.array(z.string()).optional().describe("OUTER JOIN paths for optional relationships"),
+    sort: z
+      .object({
+        field: z.string(),
+        direction: z.enum(["ASC", "DESC"]),
+      })
+      .optional()
+      .describe("Sort order"),
+    limit: z.number().optional().default(100).describe("Maximum results"),
+  },
+  async ({ from, select, where, joins, sort, limit }) => {
+    try {
+      const results = await client.buildAndRunQuery({
+        from,
+        select,
+        where: where as QueryBuilder["where"],
+        joins,
+        sort,
+        limit,
+      });
+      return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Query error: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Mine Natural Query
+server.tool(
+  "mine_natural_query",
+  `Query AllianceMine using natural language. The query will be converted to a structured PathQuery.
+
+Examples:
+- "human genes in DNA repair pathway" → Gene where organism.name = Homo sapiens, pathways.name CONTAINS DNA repair
+- "proteins with kinase domains" → Protein where proteinDomains.name CONTAINS kinase
+- "diseases associated with BRCA1" → Disease where genes.symbol = BRCA1
+- "mouse genes on chromosome 1" → Gene where organism.name = Mus musculus, chromosome.primaryIdentifier = 1
+- "all pathways containing TP53" → Pathway where genes.symbol = TP53
+
+Available classes: Gene, Protein, Disease, Pathway, Phenotype, Allele, GOTerm, Publication, Organism`,
+  {
+    query: z.string().describe("Natural language query describing what to find"),
+    limit: z.number().optional().default(100).describe("Maximum results"),
+  },
+  async ({ query, limit }) => {
+    // The LLM calling this tool should convert NL to structured query
+    // This is a pass-through that documents the conversion expectations
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              message:
+                "Convert this natural language query to a mine_query_builder call",
+              query,
+              limit,
+              hint: "Parse the query to extract: from (class), select (fields), where (constraints)",
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  }
+);
+
+// Tool: List Templates
+server.tool(
+  "mine_list_templates",
+  "List available query templates in AllianceMine. Templates are pre-built queries for common use cases.",
+  {},
+  async () => {
+    try {
+      const templates = await client.listTemplates();
+      return {
+        content: [{ type: "text", text: JSON.stringify(templates, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Error listing templates: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Run Template
+server.tool(
+  "mine_run_template",
+  `Run a pre-built query template with parameters.
+
+Common templates:
+- Gene_Disease: Find diseases for a gene (params: A = gene symbol)
+- Gene_Pathway: Find pathways for a gene
+- Pathway_Genes: Find genes in a pathway
+- Gene_Orthologs: Find orthologs for a gene
+- Gene_Phenotypes: Find phenotypes for a gene
+
+Use mine_list_templates to discover all available templates.`,
+  {
+    name: z.string().describe("Template name"),
+    params: z
+      .record(z.string())
+      .describe("Template parameters as {constraintCode: value}, e.g., {A: 'BRCA1'}"),
+    limit: z.number().optional().default(100).describe("Maximum results"),
+  },
+  async ({ name, params, limit }) => {
+    try {
+      const results = await client.runTemplate(name, params, limit);
+      return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Template error: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Get Lists
+server.tool(
+  "mine_get_lists",
+  "Get all available gene/protein lists in AllianceMine.",
+  {
+    type: z
+      .string()
+      .optional()
+      .describe("Filter by type: Gene, Protein, etc."),
+  },
+  async ({ type }) => {
+    try {
+      const lists = await client.getLists(type);
+      return {
+        content: [{ type: "text", text: JSON.stringify(lists, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Error fetching lists: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Get List Contents
+server.tool(
+  "mine_get_list",
+  "Get the contents of a specific list.",
+  {
+    name: z.string().describe("List name"),
+  },
+  async ({ name }) => {
+    try {
+      const data = await client.getList(name);
+      if (!data) {
+        return {
+          content: [{ type: "text", text: `List not found: ${name}` }],
+          isError: true,
+        };
+      }
+      return {
+        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Error fetching list: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Create List (requires auth)
+server.tool(
+  "mine_create_list",
+  "Create a new list in AllianceMine. Requires ALLIANCEMINE_TOKEN environment variable.",
+  {
+    name: z.string().describe("List name"),
+    type: z.string().describe("List type: Gene, Protein, etc."),
+    identifiers: z
+      .array(z.string())
+      .describe("Array of identifiers to add to the list"),
+    description: z.string().optional().describe("List description"),
+  },
+  async ({ name, type, identifiers, description }) => {
+    try {
+      const result = await client.createList(name, type, identifiers, description);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Error creating list: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Add to List (requires auth)
+server.tool(
+  "mine_add_to_list",
+  "Add items to an existing list. Requires ALLIANCEMINE_TOKEN environment variable.",
+  {
+    name: z.string().describe("List name"),
+    identifiers: z.array(z.string()).describe("Identifiers to add"),
+  },
+  async ({ name, identifiers }) => {
+    try {
+      const result = await client.addToList(name, identifiers);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Error adding to list: ${error}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool: Delete List (requires auth)
+server.tool(
+  "mine_delete_list",
+  "Delete a list from AllianceMine. Requires ALLIANCEMINE_TOKEN environment variable.",
+  {
+    name: z.string().describe("List name to delete"),
+  },
+  async ({ name }) => {
+    try {
+      const result = await client.deleteList(name);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `Error deleting list: ${error}` }],
         isError: true,
       };
     }
