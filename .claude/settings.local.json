@@ -17,7 +17,16 @@
       "Bash(xelatex:*)",
       "Bash(git checkout:*)",
       "WebFetch(domain:www.alliancegenome.org)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(rm:*)",
+      "Bash(cat:*)",
+      "Skill(superpowers:brainstorming)",
+      "WebFetch(domain:alliancemine.alliancegenome.org)",
+      "Bash(mkdir:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:intermine.readthedocs.io)",
+      "WebSearch",
+      "Bash(python3:*)"
     ],
     "deny": []
   },

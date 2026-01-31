@@ -482,7 +482,7 @@ export class AllianceClient {
 
     // Prefix select fields with root class if not already prefixed
     const viewFields = select.map((field) =>
-      field.includes(".") ? field : `${from}.${field}`
+      field.startsWith(`${from}.`) ? field : `${from}.${field}`
     );
 
     let xml = `<query model="genomic" view="${viewFields.join(" ")}"`;
