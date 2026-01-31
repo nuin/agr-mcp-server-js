@@ -80,3 +80,19 @@ Human, mouse, rat, zebrafish, fly, worm, yeast, frog (Xenopus laevis & tropicali
 - Zod for input validation
 - Stateless - no caching layer
 - Requires Node.js >= 18.0.0
+- No test framework configured
+
+### Tool Pattern
+
+All MCP tools follow the same structure:
+1. Zod schema for input validation
+2. Call to `AllianceClient` method
+3. Return `{content: [{type: "text", text: JSON.stringify(data, null, 2)}]}`
+4. On error: return with `isError: true`
+
+### AllianceClient
+
+The client accepts optional custom API URLs in the constructor for testing or alternative endpoints:
+```typescript
+new AllianceClient(agrApiUrl?, allianceMineUrl?)
+```
