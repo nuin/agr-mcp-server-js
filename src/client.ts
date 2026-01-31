@@ -478,9 +478,14 @@ export class AllianceClient {
    * Build PathQuery XML from QueryBuilder definition
    */
   buildPathQueryXml(query: QueryBuilder): string {
-    const { from, select, where, joins, sort, limit } = query;
+    const { from, select, where, joins, sort } = query;
 
-    let xml = `<query model="genomic" view="${select.join(" ")}"`;
+    // Prefix select fields with root class if not already prefixed
+    const viewFields = select.map((field) =>
+      field.includes(".") ? field : `${from}.${field}`
+    );
+
+    let xml = `<query model="genomic" view="${viewFields.join(" ")}"`;
     if (sort) {
       xml += ` sortOrder="${sort.field} ${sort.direction}"`;
     }
