@@ -114,13 +114,15 @@ export class AllianceClient {
   }
 
   /**
-   * Search using AllianceMine for more advanced queries
+   * Search using AllianceMine for more advanced queries.
+   * Falls back to PathQuery-based search if keyword search fails.
    */
   async searchMine(
     query: string,
     type?: string,
     limit: number = 20
   ): Promise<SearchResponse> {
+    // Try keyword search first
     const params = new URLSearchParams({
       q: query,
       size: String(limit),
@@ -141,14 +143,67 @@ export class AllianceClient {
           fields: Record<string, unknown>;
         }>;
         totalHits: number;
+        wasSuccessful?: boolean;
+        error?: string;
       }>(url);
+
+      // Check if search service returned an error
+      if (response.wasSuccessful === false || response.error) {
+        throw new Error(response.error || "Search service unavailable");
+      }
 
       return {
         query,
         results: this.parseMineResults(response.results, limit),
         total: response.totalHits,
       };
-    } catch (error) {
+    } catch {
+      // Fallback to PathQuery-based search
+      return this.searchMineViaPathQuery(query, type, limit);
+    }
+  }
+
+  /**
+   * Fallback search using PathQuery when keyword search is unavailable
+   */
+  private async searchMineViaPathQuery(
+    query: string,
+    type?: string,
+    limit: number = 20
+  ): Promise<SearchResponse> {
+    const searchType = type || "Gene";
+    const xml = `<query model="genomic" view="${searchType}.primaryIdentifier ${searchType}.symbol ${searchType}.name ${searchType}.organism.shortName">
+      <constraint path="${searchType}.symbol" op="CONTAINS" value="${this.escapeXml(query)}"/>
+    </query>`;
+
+    const params = new URLSearchParams({
+      query: xml,
+      format: "json",
+      size: String(limit),
+    });
+
+    const url = `${this.allianceMineUrl}/query/results?${params.toString()}`;
+
+    try {
+      const response = await this.fetch<{
+        results: unknown[][];
+        columnHeaders?: string[];
+      }>(url);
+
+      const results: SearchResult[] = response.results.map((row) => ({
+        id: String(row[0] || ""),
+        symbol: String(row[1] || ""),
+        name: String(row[2] || row[1] || ""),
+        species: String(row[3] || ""),
+        category: searchType.toLowerCase(),
+      }));
+
+      return {
+        query,
+        results,
+        total: results.length,
+      };
+    } catch {
       return { query, results: [], total: 0 };
     }
   }
@@ -521,7 +576,7 @@ export class AllianceClient {
    * List available query templates
    */
   async listTemplates(): Promise<MineTemplate[]> {
-    const url = `${this.allianceMineUrl}/templates`;
+    const url = `${this.allianceMineUrl}/templates?format=json`;
 
     try {
       const response = await this.fetch<{
@@ -538,24 +593,35 @@ export class AllianceClient {
   }
 
   /**
-   * Run a template query with parameters
+   * Run a template query with parameters.
+   * Parameters should be provided as { "1": { path: "Gene", op: "LOOKUP", value: "BRCA1" } }
+   * or simplified as { "1": "BRCA1" } for LOOKUP constraints (path and op inferred from template).
    */
   async runTemplate(
     name: string,
-    params: Record<string, string>,
+    params: Record<string, string | { path?: string; op?: string; value: string }>,
     limit: number = 100
   ): Promise<PathQueryResult> {
     const queryParams = new URLSearchParams({
+      name,
       format: "json",
       size: String(limit),
     });
 
-    // Add template parameters (constraint values)
-    for (const [key, value] of Object.entries(params)) {
-      queryParams.set(`constraint${key}`, value);
+    // Add template parameters
+    for (const [key, param] of Object.entries(params)) {
+      if (typeof param === "string") {
+        // Simple format: just the value, assume LOOKUP
+        queryParams.set(`value${key}`, param);
+      } else {
+        // Full format with path, op, value
+        if (param.path) queryParams.set(`constraint${key}`, param.path);
+        if (param.op) queryParams.set(`op${key}`, param.op);
+        queryParams.set(`value${key}`, param.value);
+      }
     }
 
-    const url = `${this.allianceMineUrl}/template/results/${encodeURIComponent(name)}?${queryParams.toString()}`;
+    const url = `${this.allianceMineUrl}/template/results?${queryParams.toString()}`;
 
     try {
       const response = await this.fetch<{

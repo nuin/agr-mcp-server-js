@@ -482,19 +482,31 @@ server.tool(
   "mine_run_template",
   `Run a pre-built query template with parameters.
 
-Common templates:
-- Gene_Disease: Find diseases for a gene (params: A = gene symbol)
-- Gene_Pathway: Find pathways for a gene
-- Pathway_Genes: Find genes in a pathway
-- Gene_Orthologs: Find orthologs for a gene
-- Gene_Phenotypes: Find phenotypes for a gene
+Parameter format: Use numeric keys ("1", "2", etc.) matching constraint positions.
+- Simple: {"1": "BRCA1"} - just the value
+- Full: {"1": {"path": "Gene", "op": "LOOKUP", "value": "BRCA1"}}
 
-Use mine_list_templates to discover all available templates.`,
+Common templates:
+- Gene_Orthologs: Find orthologs (params: {"1": {"path": "Gene", "op": "LOOKUP", "value": "HGNC:1100"}})
+- Gene_GOTerms: GO annotations for a gene
+- Gene_DOTerm: Disease annotations for a gene
+- GOTerm_Genes: Find genes by GO term
+
+Use mine_list_templates to discover all available templates and their constraints.`,
   {
-    name: z.string().describe("Template name"),
+    name: z.string().describe("Template name (e.g., 'Gene_Orthologs')"),
     params: z
-      .record(z.string())
-      .describe("Template parameters as {constraintCode: value}, e.g., {A: 'BRCA1'}"),
+      .record(
+        z.union([
+          z.string(),
+          z.object({
+            path: z.string().optional(),
+            op: z.string().optional(),
+            value: z.string(),
+          }),
+        ])
+      )
+      .describe("Template parameters with numeric keys, e.g., {'1': {'path': 'Gene', 'op': 'LOOKUP', 'value': 'HGNC:1100'}}"),
     limit: z.number().optional().default(100).describe("Maximum results"),
   },
   async ({ name, params, limit }) => {
