@@ -10,7 +10,7 @@ const client = new AllianceClient();
 
 const server = new McpServer({
   name: "agr-genomics",
-  version: "4.0.0",
+  version: "4.0.2",
 });
 
 // Tool: Search genes

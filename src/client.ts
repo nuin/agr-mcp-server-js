@@ -302,7 +302,7 @@ export class AllianceClient {
    * Get list of supported species from API
    */
   async getSpeciesList(): Promise<unknown> {
-    const url = `${this.agrApiUrl}/api/species`;
+    const url = `${this.agrApiUrl}/species`;
     try {
       return await this.fetch<unknown>(url);
     } catch {

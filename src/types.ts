@@ -43,7 +43,8 @@ export const SPECIES_MAP: Record<string, Species> = {
   worm: "Caenorhabditis elegans",
   yeast: "Saccharomyces cerevisiae",
   frog: "Xenopus laevis",
-  xenopus: "Xenopus tropicalis",
+  laevis: "Xenopus laevis",
+  tropicalis: "Xenopus tropicalis",
 };
 
 // Gene ID prefixes by data source
