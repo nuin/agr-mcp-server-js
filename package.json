@@ -39,8 +39,12 @@
   },
   "homepage": "https://github.com/nuin/agr-mcp-server-js#readme",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.22.0"
+  },
+  "overrides": {
+    "ajv": "^8.20.0",
+    "fast-uri": "^3.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
