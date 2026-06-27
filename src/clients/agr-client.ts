@@ -135,6 +135,42 @@ export class AgrClient {
     return this.search(query, "disease", undefined, limit);
   }
 
+  async getDisease(doId: string): Promise<unknown | null> {
+    const url = `${this.baseUrl}/disease/${encodeURIComponent(doId)}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return null;
+    }
+  }
+
+  async getDiseaseGenes(doId: string, limit: number = 100): Promise<unknown> {
+    const url = `${this.baseUrl}/disease/${encodeURIComponent(doId)}/genes?limit=${limit}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return { results: [], total: 0 };
+    }
+  }
+
+  async getDiseaseModels(doId: string, limit: number = 100): Promise<unknown> {
+    const url = `${this.baseUrl}/disease/${encodeURIComponent(doId)}/models?limit=${limit}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return { results: [], total: 0 };
+    }
+  }
+
+  async getDiseaseAlleles(doId: string, limit: number = 100): Promise<unknown> {
+    const url = `${this.baseUrl}/disease/${encodeURIComponent(doId)}/alleles?limit=${limit}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return { results: [], total: 0 };
+    }
+  }
+
   async getGeneExpression(
     geneId: string,
     limit: number = 100
@@ -151,6 +187,15 @@ export class AgrClient {
 
   async getOrthologs(geneId: string): Promise<unknown> {
     const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}/orthologs`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return { results: [], total: 0 };
+    }
+  }
+
+  async getParalogs(geneId: string): Promise<unknown> {
+    const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}/paralogs`;
     try {
       return await fetchJson<unknown>(url);
     } catch {

@@ -108,6 +108,16 @@ export function registerAgrTools(
   );
 
   server.tool(
+    "find_paralogs",
+    "Find paralogous genes within the same species (genes related by duplication). Complements find_orthologs.",
+    {
+      gene_id: z.string().describe("Gene identifier"),
+    },
+    ({ gene_id }) =>
+      safeHandler("Error fetching paralogs", () => client.getParalogs(gene_id))
+  );
+
+  server.tool(
     "get_gene_phenotypes",
     "Get phenotype annotations for a gene.",
     {

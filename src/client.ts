@@ -53,6 +53,26 @@ export class AllianceClient {
     return this.agr.getOrthologs(geneId);
   }
 
+  getParalogs(geneId: string): Promise<unknown> {
+    return this.agr.getParalogs(geneId);
+  }
+
+  getDisease(doId: string): Promise<unknown | null> {
+    return this.agr.getDisease(doId);
+  }
+
+  getDiseaseGenes(doId: string, limit?: number): Promise<unknown> {
+    return this.agr.getDiseaseGenes(doId, limit);
+  }
+
+  getDiseaseModels(doId: string, limit?: number): Promise<unknown> {
+    return this.agr.getDiseaseModels(doId, limit);
+  }
+
+  getDiseaseAlleles(doId: string, limit?: number): Promise<unknown> {
+    return this.agr.getDiseaseAlleles(doId, limit);
+  }
+
   getGenePhenotypes(
     geneId: string,
     limit?: number

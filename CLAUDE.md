@@ -42,13 +42,15 @@ The AGR API runs on Quarkus; its machine-readable spec lives at `https://www.all
 | `getGene` | `GET /gene/{id}` (returns a `{category, gene:{…}}` wrapper) |
 | `getGeneDiseases` | `POST /disease` with body `["{id}"]` |
 | `getGeneExpression` | `POST /expression` with body `["{id}"]` |
-| `getOrthologs` | `GET /gene/{id}/orthologs` (was `/homologs`) |
+| `getOrthologs` / `getParalogs` | `GET /gene/{id}/orthologs` (was `/homologs`) / `/paralogs` |
 | `getGeneInteractions` | merges `GET /gene/{id}/molecular-interactions` + `/genetic-interactions`, tagging each row with `interactionCategory` |
 | `getGenePhenotypes` / `getGeneAlleles` | `GET /gene/{id}/phenotypes` / `/alleles` |
+| `getDisease` | `GET /disease/{id}` (returns disease object, `null` if missing) |
+| `getDiseaseGenes` / `getDiseaseModels` / `getDiseaseAlleles` | `GET /disease/{id}/genes` / `/models` / `/alleles` |
 
 Changed AGR responses are passed through as raw JSON (typed `unknown`) rather than remapped to fixed interfaces, so endpoint drift doesn't silently drop fields.
 
-### MCP Tools (11)
+### MCP Tools (16)
 
 | Tool | Purpose |
 |------|---------|
@@ -58,10 +60,15 @@ Changed AGR responses are passed through as raw JSON (typed `unknown`) rather th
 | `search_diseases` | Search diseases |
 | `get_gene_expression` | Expression data |
 | `find_orthologs` | Cross-species homologs |
+| `find_paralogs` | Within-species paralogs (gene duplications) |
 | `get_gene_phenotypes` | Phenotype annotations |
 | `get_gene_interactions` | Molecular/genetic interactions |
 | `get_gene_alleles` | Alleles for a gene |
 | `search_alleles` | Search alleles |
+| `get_disease_info` | Disease details by DOID |
+| `get_disease_genes` | Genes associated with a disease (reverse of `get_gene_diseases`) |
+| `get_disease_models` | Model organisms for a disease |
+| `get_disease_alleles` | Alleles associated with a disease |
 | `get_species_list` | List supported model organisms |
 
 ### MCP Resources

@@ -1,10 +1,10 @@
 {
   "name": "agr-mcp-server",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "MCP server for Alliance of Genome Resources - access genomics data across model organisms",
   "main": "dist/index.js",
   "bin": {
-    "agr-mcp-server": "./dist/index.js"
+    "agr-mcp-server": "dist/index.js"
   },
   "type": "module",
   "scripts": {
