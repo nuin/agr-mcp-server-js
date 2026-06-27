@@ -1,12 +1,7 @@
 import {
   EntityType,
   SearchResponse,
-  GeneData,
-  DiseaseResponse,
-  ExpressionResponse,
-  OrthologyResponse,
   PhenotypeResponse,
-  InteractionResponse,
   AlleleResponse,
   Species,
   SPECIES_MAP,
@@ -31,6 +26,28 @@ export async function fetchJson<T>(url: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+export async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { ...BROWSER_HEADERS, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  return response.json() as Promise<T>;
+}
+
+// The AGR search API categorizes hits with a `_search_result` suffix
+// (e.g. "gene_search_result"). Map our entity types onto those keys.
+const SEARCH_CATEGORY_MAP: Partial<Record<EntityType, string>> = {
+  gene: "gene_search_result",
+  allele: "allele_search_result",
+  disease: "disease_search_result",
+  go_term: "go_search_result",
+  variant: "variant_search_result",
+};
+
 export class AgrClient {
   constructor(private readonly baseUrl: string) {}
 
@@ -43,7 +60,7 @@ export class AgrClient {
     const params = new URLSearchParams({ q: query, limit: String(limit) });
 
     if (category) {
-      params.set("category", category);
+      params.set("category", SEARCH_CATEGORY_MAP[category] ?? category);
     }
 
     if (species) {
@@ -88,10 +105,10 @@ export class AgrClient {
     }
   }
 
-  async getGene(geneId: string): Promise<GeneData | null> {
+  async getGene(geneId: string): Promise<unknown | null> {
     const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}`;
     try {
-      return await fetchJson<GeneData>(url);
+      return await fetchJson<unknown>(url);
     } catch {
       return null;
     }
@@ -100,10 +117,12 @@ export class AgrClient {
   async getGeneDiseases(
     geneId: string,
     limit: number = 100
-  ): Promise<DiseaseResponse> {
-    const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}/diseases?limit=${limit}`;
+  ): Promise<unknown> {
+    // The per-gene GET /diseases route was removed; disease annotations are
+    // now served by POST /api/disease with a JSON array of gene IDs.
+    const url = `${this.baseUrl}/disease?limit=${limit}`;
     try {
-      return await fetchJson<DiseaseResponse>(url);
+      return await postJson<unknown>(url, [geneId]);
     } catch {
       return { results: [], total: 0 };
     }
@@ -119,19 +138,21 @@ export class AgrClient {
   async getGeneExpression(
     geneId: string,
     limit: number = 100
-  ): Promise<ExpressionResponse> {
-    const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}/expression?limit=${limit}`;
+  ): Promise<unknown> {
+    // The per-gene GET /expression route was removed; expression annotations
+    // are now served by POST /api/expression with a JSON array of gene IDs.
+    const url = `${this.baseUrl}/expression?limit=${limit}`;
     try {
-      return await fetchJson<ExpressionResponse>(url);
+      return await postJson<unknown>(url, [geneId]);
     } catch {
       return { results: [], total: 0 };
     }
   }
 
-  async getOrthologs(geneId: string): Promise<OrthologyResponse> {
-    const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}/homologs`;
+  async getOrthologs(geneId: string): Promise<unknown> {
+    const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}/orthologs`;
     try {
-      return await fetchJson<OrthologyResponse>(url);
+      return await fetchJson<unknown>(url);
     } catch {
       return { results: [], total: 0 };
     }
@@ -152,13 +173,35 @@ export class AgrClient {
   async getGeneInteractions(
     geneId: string,
     limit: number = 100
-  ): Promise<InteractionResponse> {
-    const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}/interactions?limit=${limit}`;
-    try {
-      return await fetchJson<InteractionResponse>(url);
-    } catch {
-      return { results: [], total: 0 };
-    }
+  ): Promise<unknown> {
+    // The combined GET /interactions route was split into separate molecular
+    // and genetic endpoints. Fetch both and merge, tagging each row.
+    const enc = encodeURIComponent(geneId);
+    const fetchKind = (kind: "molecular" | "genetic") =>
+      fetchJson<{ results?: unknown[]; total?: number }>(
+        `${this.baseUrl}/gene/${enc}/${kind}-interactions?limit=${limit}`
+      )
+        .then((r) => ({
+          results: (r.results ?? []).map((row) =>
+            row && typeof row === "object"
+              ? { ...(row as Record<string, unknown>), interactionCategory: kind }
+              : row
+          ),
+          total: r.total ?? 0,
+        }))
+        .catch(() => ({ results: [] as unknown[], total: 0 }));
+
+    const [molecular, genetic] = await Promise.all([
+      fetchKind("molecular"),
+      fetchKind("genetic"),
+    ]);
+
+    return {
+      results: [...molecular.results, ...genetic.results],
+      total: molecular.total + genetic.total,
+      molecularTotal: molecular.total,
+      geneticTotal: genetic.total,
+    };
   }
 
   async getGeneAlleles(

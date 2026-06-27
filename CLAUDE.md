@@ -31,8 +31,22 @@ src/
 
 ### API Endpoints
 
-- **AGR REST API**: `https://www.alliancegenome.org/api` - Gene info, diseases, expression, orthologs
-- **AllianceMine**: `https://www.alliancegenome.org/alliancemine/service` - Advanced search (available via `searchMine()` but not exposed as tool)
+- **AGR REST API**: `https://www.alliancegenome.org/api` - Gene info, diseases, expression, orthologs (overridable via `AGR_API_URL`)
+- **AllianceMine**: `https://alliancemine.alliancegenome.org/alliancemine/service` - Advanced search (overridable via `ALLIANCEMINE_URL`)
+
+The AGR API runs on Quarkus; its machine-readable spec lives at `https://www.alliancegenome.org/openapi`. Current per-gene routes the client relies on:
+
+| Client method | AGR route |
+|---|---|
+| `search` / `searchDiseases` / `searchAlleles` | `GET /search` (category keys use a `_search_result` suffix, e.g. `gene_search_result`) |
+| `getGene` | `GET /gene/{id}` (returns a `{category, gene:{…}}` wrapper) |
+| `getGeneDiseases` | `POST /disease` with body `["{id}"]` |
+| `getGeneExpression` | `POST /expression` with body `["{id}"]` |
+| `getOrthologs` | `GET /gene/{id}/orthologs` (was `/homologs`) |
+| `getGeneInteractions` | merges `GET /gene/{id}/molecular-interactions` + `/genetic-interactions`, tagging each row with `interactionCategory` |
+| `getGenePhenotypes` / `getGeneAlleles` | `GET /gene/{id}/phenotypes` / `/alleles` |
+
+Changed AGR responses are passed through as raw JSON (typed `unknown`) rather than remapped to fixed interfaces, so endpoint drift doesn't silently drop fields.
 
 ### MCP Tools (11)
 

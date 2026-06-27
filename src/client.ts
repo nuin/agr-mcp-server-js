@@ -4,12 +4,7 @@ import { MineClient } from "./clients/mine-client.js";
 import {
   EntityType,
   SearchResponse,
-  GeneData,
-  DiseaseResponse,
-  ExpressionResponse,
-  OrthologyResponse,
   PhenotypeResponse,
-  InteractionResponse,
   AlleleResponse,
   Species,
   QueryBuilder,
@@ -38,11 +33,11 @@ export class AllianceClient {
     return this.agr.search(query, category, species, limit);
   }
 
-  getGene(geneId: string): Promise<GeneData | null> {
+  getGene(geneId: string): Promise<unknown | null> {
     return this.agr.getGene(geneId);
   }
 
-  getGeneDiseases(geneId: string, limit?: number): Promise<DiseaseResponse> {
+  getGeneDiseases(geneId: string, limit?: number): Promise<unknown> {
     return this.agr.getGeneDiseases(geneId, limit);
   }
 
@@ -50,14 +45,11 @@ export class AllianceClient {
     return this.agr.searchDiseases(query, limit);
   }
 
-  getGeneExpression(
-    geneId: string,
-    limit?: number
-  ): Promise<ExpressionResponse> {
+  getGeneExpression(geneId: string, limit?: number): Promise<unknown> {
     return this.agr.getGeneExpression(geneId, limit);
   }
 
-  getOrthologs(geneId: string): Promise<OrthologyResponse> {
+  getOrthologs(geneId: string): Promise<unknown> {
     return this.agr.getOrthologs(geneId);
   }
 
@@ -68,10 +60,7 @@ export class AllianceClient {
     return this.agr.getGenePhenotypes(geneId, limit);
   }
 
-  getGeneInteractions(
-    geneId: string,
-    limit?: number
-  ): Promise<InteractionResponse> {
+  getGeneInteractions(geneId: string, limit?: number): Promise<unknown> {
     return this.agr.getGeneInteractions(geneId, limit);
   }
 

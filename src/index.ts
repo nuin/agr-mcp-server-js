@@ -11,7 +11,7 @@ const client = new AllianceClient();
 
 const server = new McpServer({
   name: "agr-genomics",
-  version: "5.0.2",
+  version: "5.1.0",
 });
 
 registerAgrTools(server, client);
