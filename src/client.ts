@@ -88,6 +88,26 @@ export class AllianceClient {
     return this.agr.getGeneAlleles(geneId, limit);
   }
 
+  getGeneModels(geneId: string, limit?: number): Promise<unknown> {
+    return this.agr.getGeneModels(geneId, limit);
+  }
+
+  getAllele(alleleId: string): Promise<unknown | null> {
+    return this.agr.getAllele(alleleId);
+  }
+
+  getAlleleDiseases(alleleId: string, limit?: number): Promise<unknown> {
+    return this.agr.getAlleleDiseases(alleleId, limit);
+  }
+
+  getAllelePhenotypes(alleleId: string, limit?: number): Promise<unknown> {
+    return this.agr.getAllelePhenotypes(alleleId, limit);
+  }
+
+  getAlleleVariants(alleleId: string, limit?: number): Promise<unknown> {
+    return this.agr.getAlleleVariants(alleleId, limit);
+  }
+
   searchAlleles(query: string, limit?: number): Promise<SearchResponse> {
     return this.agr.searchAlleles(query, limit);
   }

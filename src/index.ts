@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { AllianceClient } from "./client.js";
 import { registerAgrTools } from "./tools/agr-tools.js";
 import { registerDiseaseTools } from "./tools/disease-tools.js";
+import { registerAlleleTools } from "./tools/allele-tools.js";
 import { registerMineTools } from "./tools/mine-tools.js";
 import { registerResources } from "./tools/resources.js";
 
@@ -12,11 +13,12 @@ const client = new AllianceClient();
 
 const server = new McpServer({
   name: "agr-genomics",
-  version: "5.2.0",
+  version: "5.3.0",
 });
 
 registerAgrTools(server, client);
 registerDiseaseTools(server, client);
+registerAlleleTools(server, client);
 registerMineTools(server, client);
 registerResources(server, client);
 

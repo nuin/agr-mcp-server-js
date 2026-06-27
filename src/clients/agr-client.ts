@@ -261,6 +261,60 @@ export class AgrClient {
     }
   }
 
+  async getGeneModels(geneId: string, limit: number = 100): Promise<unknown> {
+    const url = `${this.baseUrl}/gene/${encodeURIComponent(geneId)}/models?limit=${limit}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return { results: [], total: 0 };
+    }
+  }
+
+  async getAllele(alleleId: string): Promise<unknown | null> {
+    const url = `${this.baseUrl}/allele/${encodeURIComponent(alleleId)}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return null;
+    }
+  }
+
+  async getAlleleDiseases(
+    alleleId: string,
+    limit: number = 100
+  ): Promise<unknown> {
+    const url = `${this.baseUrl}/allele/${encodeURIComponent(alleleId)}/diseases?limit=${limit}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return { results: [], total: 0 };
+    }
+  }
+
+  async getAllelePhenotypes(
+    alleleId: string,
+    limit: number = 100
+  ): Promise<unknown> {
+    const url = `${this.baseUrl}/allele/${encodeURIComponent(alleleId)}/phenotypes?limit=${limit}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return { results: [], total: 0 };
+    }
+  }
+
+  async getAlleleVariants(
+    alleleId: string,
+    limit: number = 100
+  ): Promise<unknown> {
+    const url = `${this.baseUrl}/allele/${encodeURIComponent(alleleId)}/variants?limit=${limit}`;
+    try {
+      return await fetchJson<unknown>(url);
+    } catch {
+      return { results: [], total: 0 };
+    }
+  }
+
   async searchAlleles(
     query: string,
     limit: number = 20

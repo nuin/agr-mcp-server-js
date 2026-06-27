@@ -157,6 +157,19 @@ export function registerAgrTools(
   );
 
   server.tool(
+    "get_gene_models",
+    "Get affected genomic models (e.g., disease models) associated with a gene.",
+    {
+      gene_id: z.string().describe("Gene identifier"),
+      limit: z.number().optional().default(100).describe("Maximum results"),
+    },
+    ({ gene_id, limit }) =>
+      safeHandler("Error fetching gene models", () =>
+        client.getGeneModels(gene_id, limit)
+      )
+  );
+
+  server.tool(
     "search_alleles",
     "Search for alleles/variants in the Alliance database.",
     {
